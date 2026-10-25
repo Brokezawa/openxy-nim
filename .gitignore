@@ -1,0 +1,21 @@
+# LLM artifacts
+.agents/
+openspec/
+.opencode/
+
+
+# Nim artifacts
+nim.cfg
+deps/
+build/
+
+# Others
+.DS_Store
+ressources
+
+# Test executables (sources stay tracked)
+tests/t_*
+!tests/t_*.nim
+tests/fixtures/valid_synth
+templates/*/tests/t_*
+!templates/*/tests/t_*.nim

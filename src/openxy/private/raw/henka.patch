@@ -1,0 +1,433 @@
+diff -ruN a/src/openxy/private/raw/opxy/audio.nim b/src/openxy/private/raw/opxy/audio.nim
+--- a/src/openxy/private/raw/opxy/audio.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/audio.nim	2026-10-26 15:36:59
+@@ -1 +1 @@
+-const block_frames *:cuint= 64
++const block_frames*: cuint = 64
+diff -ruN a/src/openxy/private/raw/opxy/draw.nim b/src/openxy/private/raw/opxy/draw.nim
+--- a/src/openxy/private/raw/opxy/draw.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/draw.nim	2026-10-26 15:36:59
+@@ -1,77 +1,119 @@
++## Concrete raw draw surface. Henka cannot instantiate the SDK's `Path` and
++## `Frame` templates, so this module uses the largest SDK shapes as concrete
++## storage. The generated wrapper uses the typed public mirrors instead.
++
+ type
+-  enum_Paint *{.pure, size:sizeof(cint), importcpp:"Paint", header:"opxy/draw.hpp".}= enum
+-    keep = 0,
+-    stroke = 1,
++  Paint* {.size: sizeof(uint32), pure, importcpp: "Paint",
++    header: "opxy/draw.hpp".} = enum
++    keep = 0
++    stroke = 1
+     fill_and_stroke = 2
+-  Paint * = enum_Paint
+-  Point *{.inheritable, importcpp:"opxy::draw::Point", header:"opxy/draw.hpp".}= object
+-    x *:cint
+-    y *:cint
+-  Turn *{.inheritable, importcpp:"opxy::draw::Turn", header:"opxy/draw.hpp".}= object
+-    cos *:cint
+-    sin *:cint
+-  Path *{.importcpp:"opxy::draw::Path", header:"opxy/draw.hpp".}= object
+-    key *:cint
+-    points *:UNSUPPORTED_116
+-  Node *{.inheritable, importcpp:"opxy::draw::Node", header:"opxy/draw.hpp".}= object
+-    x *:cint
+-    y *:cint
+-    scale *:cint
+-    cos *:cint
+-    sin *:cint
+-    shade *:cint
+-    paint *:Paint
+-  Text *{.inheritable, importcpp:"opxy::draw::Text", header:"opxy/draw.hpp".}= object
+-    x *:cint
+-    y *:cint
+-    scale *:cint
+-    chars *:cint
+-  Frame *{.importcpp:"opxy::draw::Frame", header:"opxy/draw.hpp".}= object
+-    paths *:UNSUPPORTED_116
+-    nodes *:UNSUPPORTED_116
+-    texts *:UNSUPPORTED_116
+-    header *:cchar
+-  Input *{.inheritable, importcpp:"opxy::draw::Input", header:"opxy/draw.hpp".}= object
+-    parameters *:cint
+-    elapsed *:cint
+-    track *:cint
+-    reduced_motion *:cint
+-    shown *:cint
+-    slots *:cint
+-    held_notes *:cint
+-    note_off_serial *:cint
+-  NoteEvents *{.inheritable, importcpp:"opxy::draw::NoteEvents", header:"opxy/draw.hpp".}= object
+-    hold_started *:bool
+-    hold_ended *:bool
+-    note_released *:bool
+-  NoteTracker *{.inheritable, importcpp:"opxy::draw::NoteTracker", header:"opxy/draw.hpp".}= object
+-    initialized *:cint
+-    track *:cint
+-    held_notes *:cint
+-    note_off_serial *:cint
+-let
+-  unit *:cint
+-  path_extent *:cint
+-  node_left *:cint
+-  hidden_x *:cint
+-  text_capacity *:cint
+-  notes_unavailable *:cint
+-proc reset *(this :var NoteTracker) {.importcpp:"#.reset(@)", header:"opxy/draw.hpp".}
+-proc update *(this :var NoteTracker; input :Input) :NoteEvents {.importcpp:"#.update(@)", header:"opxy/draw.hpp".}
+-proc floor_q10 *(value :cint) :cint {.importcpp:"opxy::draw::floor_q10(@)", header:"opxy/draw.hpp".}
+-proc clamp *(value :cint; low :cint; high :cint) :cint {.importcpp:"opxy::draw::clamp(@)", header:"opxy/draw.hpp".}
+-proc place *[F](frame :var F; node :cint; x :cint; y :cint; scale :cint; shade :cint; paint :Paint) {.importcpp:"opxy::draw::place<'*0>(@)", header:"opxy/draw.hpp".}
+-proc hide *[F](frame :var F; node :cint) {.importcpp:"opxy::draw::hide<'*0>(@)", header:"opxy/draw.hpp".}
+-proc shade *[F](frame :var F; node :cint; shade :cint; paint :Paint) {.importcpp:"opxy::draw::shade<'*0>(@)", header:"opxy/draw.hpp".}
+-proc turn *[F](frame :var F; node :cint; turn :Turn) {.importcpp:"opxy::draw::turn<'*0>(@)", header:"opxy/draw.hpp".}
+-proc copy *(output :cstring; capacity :cint; input :cstring) {.importcpp:"opxy::draw::copy(@)", header:"opxy/draw.hpp".}
+-proc text *[F](frame :var F; slot :cint; x :cint; y :cint; scale :cint; input :cstring) {.importcpp:"opxy::draw::text<'*0>(@)", header:"opxy/draw.hpp".}
+-proc header *[F](frame :var F; position :cint; input :cstring) {.importcpp:"opxy::draw::header<'*0>(@)", header:"opxy/draw.hpp".}
+-let sine_q10 *:array[91, cint]
+-proc sine *(tenths :cint) :cint {.importcpp:"opxy::draw::sine(@)", header:"opxy/draw.hpp".}
+-proc rotation *(tenths :cint) :Turn {.importcpp:"opxy::draw::rotation(@)", header:"opxy/draw.hpp".}
+-proc sweep *(value :cint; half :cint) :Turn {.importcpp:"opxy::draw::sweep(@)", header:"opxy/draw.hpp".}
+-proc terminated *(text :cstring; capacity :cint) :bool {.importcpp:"opxy::draw::terminated(@)", header:"opxy/draw.hpp".}
+-proc placement *(x :cint; y :cint; scale :cint) :bool {.importcpp:"opxy::draw::placement(@)", header:"opxy/draw.hpp".}
+-proc rotation_valid *(cos :cint; sin :cint) :bool {.importcpp:"opxy::draw::rotation_valid(@)", header:"opxy/draw.hpp".}
+-proc valid *[F](frame :F) :bool {.importcpp:"opxy::draw::valid<'*0>(@)", header:"opxy/draw.hpp".}
++
++  Point* {.importcpp: "opxy::draw::Point", header: "opxy/draw.hpp".} = object
++    x*: int32
++    y*: int32
++
++  Turn* {.importcpp: "opxy::draw::Turn", header: "opxy/draw.hpp".} = object
++    cos*: int32
++    sin*: int32
++
++  Path* {.importcpp: "opxy::draw::Path<64>", header: "opxy/draw.hpp".} = object
++    key*: uint32
++    points*: array[64, Point]
++
++  Node* {.importcpp: "opxy::draw::Node", header: "opxy/draw.hpp".} = object
++    x*: int32
++    y*: int32
++    scale*: int32
++    cos*: int32
++    sin*: int32
++    shade*: uint32
++    paint*: Paint
++
++  Text* {.importcpp: "opxy::draw::Text", header: "opxy/draw.hpp".} = object
++    x*: int32
++    y*: int32
++    scale*: int32
++    chars*: array[24, char]
++
++  Frame* {.importcpp: "opxy::draw::Frame<4, 64, 256, 4, 16>",
++    header: "opxy/draw.hpp".} = object
++    paths*: array[4, Path]
++    nodes*: array[256, Node]
++    texts*: array[4, Text]
++    header*: array[4, array[8, char]]
++
++  Input* {.importcpp: "opxy::draw::Input", header: "opxy/draw.hpp".} = object
++    parameters*: array[4, int32]
++    elapsed*: int32
++    track*: uint32
++    note_serial*: uint32
++    reduced_motion*: uint32
++    shown*: array[4, uint8]
++    slots*: array[8, int32]
++    held_notes*: uint32
++    note_off_serial*: uint32
++
++  NoteEvents* {.importcpp: "opxy::draw::NoteEvents",
++    header: "opxy/draw.hpp".} = object
++    hold_started*: bool
++    hold_ended*: bool
++    note_released*: bool
++
++  NoteTracker* {.importcpp: "opxy::draw::NoteTracker",
++    header: "opxy/draw.hpp".} = object
++    initialized*: uint32
++    track*: uint32
++    held_notes*: uint32
++    note_off_serial*: uint32
++
++const
++  unit*: int32 = 1024
++  path_extent*: int32 = 64
++  node_left*: int32 = -64
++  node_right*: int32 = 640
++  node_top*: int32 = -64
++  node_bottom*: int32 = 320
++  hidden_x*: int32 = 640
++  hidden_y*: int32 = 320
++  text_capacity*: uint32 = 24
++  header_capacity*: uint32 = 8
++  notes_unavailable*: uint32 = 0xffffffff'u32
++
++proc reset*(tracker: var NoteTracker) {.
++  importcpp: "#.reset(@)", header: "opxy/draw.hpp".}
++proc update*(tracker: var NoteTracker; input: Input): NoteEvents {.
++  importcpp: "#.update(@)", header: "opxy/draw.hpp".}
++proc floor_q10*(value: int32): int32 {.
++  importcpp: "opxy::draw::floor_q10(@)", header: "opxy/draw.hpp".}
++proc clamp*(value, low, high: int32): int32 {.
++  importcpp: "opxy::draw::clamp(@)", header: "opxy/draw.hpp".}
++proc place*[F](frame: var F; node: uint32; x, y, scale: int32;
++               shade: uint32; paint: Paint) {.
++  importcpp: "opxy::draw::place<'*0>(@)", header: "opxy/draw.hpp".}
++proc hide*[F](frame: var F; node: uint32) {.
++  importcpp: "opxy::draw::hide<'*0>(@)", header: "opxy/draw.hpp".}
++proc shade*[F](frame: var F; node: uint32; shade: uint32; paint: Paint) {.
++  importcpp: "opxy::draw::shade<'*0>(@)", header: "opxy/draw.hpp".}
++proc turn*[F](frame: var F; node: uint32; value: Turn) {.
++  importcpp: "opxy::draw::turn<'*0>(@)", header: "opxy/draw.hpp".}
++proc copy*(output: cstring; capacity: uint32; input: cstring) {.
++  importcpp: "opxy::draw::copy(@)", header: "opxy/draw.hpp".}
++proc text*[F](frame: var F; slot: uint32; x, y, scale: int32; input: cstring) {.
++  importcpp: "opxy::draw::text<'*0>(@)", header: "opxy/draw.hpp".}
++proc header*[F](frame: var F; position: uint32; input: cstring) {.
++  importcpp: "opxy::draw::header<'*0>(@)", header: "opxy/draw.hpp".}
++proc sine*(tenths: int32): int32 {.
++  importcpp: "opxy::draw::sine(@)", header: "opxy/draw.hpp".}
++proc rotation*(tenths: int32): Turn {.
++  importcpp: "opxy::draw::rotation(@)", header: "opxy/draw.hpp".}
++proc sweep*(value, half: int32): Turn {.
++  importcpp: "opxy::draw::sweep(@)", header: "opxy/draw.hpp".}
++proc terminated*(text: cstring; capacity: uint32): bool {.
++  importcpp: "opxy::draw::terminated(@)", header: "opxy/draw.hpp".}
++proc placement*(x, y, scale: int32): bool {.
++  importcpp: "opxy::draw::placement(@)", header: "opxy/draw.hpp".}
++proc rotation_valid*(cos, sin: int32): bool {.
++  importcpp: "opxy::draw::rotation_valid(@)", header: "opxy/draw.hpp".}
++proc valid*[F](frame: F): bool {.
++  importcpp: "opxy::draw::valid<'*0>(@)", header: "opxy/draw.hpp".}
+diff -ruN a/src/openxy/private/raw/opxy/effect.nim b/src/openxy/private/raw/opxy/effect.nim
+--- a/src/openxy/private/raw/opxy/effect.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/effect.nim	2026-10-26 15:36:59
+@@ -1,10 +1,14 @@
+-type Buffer *{.inheritable, importcpp:"opxy::Buffer", header:"opxy/effect.hpp".}= object
+-  words *:ptr cint
+-  count *:cint
++type
++  Buffer* {.importcpp: "opxy::Buffer", header: "opxy/effect.hpp".} = object
++    words*: ptr int32
++    count*: uint32
++
+ const
+-  effect_state_bytes *:cuint= 476
+-  effect_buffered_state_bytes *:cuint= 472
+-  effect_state_alignment *:cuint= 4
+-  effect_buffer_bytes *:cuint= 524288
+-let division_sixteenths *:array[8, cint]
+-proc division *(control :cint) :cint {.importcpp:"opxy::division(@)", header:"opxy/effect.hpp".}
++  effect_state_bytes*: uint32 = 476
++  effect_buffered_state_bytes*: uint32 = 472
++  effect_state_alignment*: uint32 = 4
++  effect_buffer_bytes*: uint32 = 524288
++  division_sixteenths*: array[8, uint32] = [2'u32, 3, 4, 6, 8, 12, 16, 32]
++
++proc division*(control: int32): uint32 {.
++  importcpp: "opxy::division(@)", header: "opxy/effect.hpp".}
+diff -ruN a/src/openxy/private/raw/opxy/q31.nim b/src/openxy/private/raw/opxy/q31.nim
+--- a/src/openxy/private/raw/opxy/q31.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/q31.nim	2026-10-26 15:36:59
+@@ -1,3 +1,6 @@
+-let maximum *:cint
+-proc multiply *(a :cint; b :cint) :cint {.importcpp:"opxy::q31::multiply(@)", header:"opxy/q31.hpp".}
+-proc half *(value :cint) :cint {.importcpp:"opxy::q31::half(@)", header:"opxy/q31.hpp".}
++const maximum*: cint = 2147483647
++
++proc multiply*(a, b: cint): cint {.
++  importcpp: "opxy::q31::multiply(@)", header: "opxy/q31.hpp".}
++proc half*(value: cint): cint {.
++  importcpp: "opxy::q31::half(@)", header: "opxy/q31.hpp".}
+diff -ruN a/src/openxy/private/raw/opxy/sample.nim b/src/openxy/private/raw/opxy/sample.nim
+--- a/src/openxy/private/raw/opxy/sample.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/sample.nim	2026-10-26 15:36:59
+@@ -1,6 +1,9 @@
+-type SampleView *{.inheritable, importcpp:"opxy::SampleView", header:"opxy/sample.hpp".}= object
+-  data *:ptr cint
+-  frames *:cint
+-  rate *:cint
+-  channels *:cint
+-proc sample_at *(view :SampleView; frame :cint; channel :cint) :cint {.importcpp:"opxy::sample_at(@)", header:"opxy/sample.hpp".}
++type
++  SampleView* {.importcpp: "opxy::SampleView", header: "opxy/sample.hpp".} = object
++    data*: ptr int16
++    frames*: uint32
++    rate*: uint32
++    channels*: uint32
++
++proc sample_at*(view: SampleView; frame: uint32; channel: uint32): int16 {.
++  importcpp: "opxy::sample_at(@)", header: "opxy/sample.hpp".}
+diff -ruN a/src/openxy/private/raw/opxy/sample_analysis.nim b/src/openxy/private/raw/opxy/sample_analysis.nim
+--- a/src/openxy/private/raw/opxy/sample_analysis.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/sample_analysis.nim	2026-10-26 15:36:59
+@@ -1,11 +1,20 @@
++import openxy/private/raw/opxy/sample
++
+ type
+-  SampleAnalysis *{.inheritable, importcpp:"opxy::SampleAnalysis", header:"opxy/sample_analysis.hpp".}= object
+-    sample *:cint
+-    words *:ptr cint
+-    word_count *:cint
+-    info *:cint
+-  enum_PrepareStatus *{.pure, size:sizeof(cint), importcpp:"PrepareStatus", header:"opxy/sample_analysis.hpp".}= enum
+-    prepare_failed = 0,
+-    prepare_done = 1,
++  SampleAnalysis* {.importcpp: "opxy::SampleAnalysis",
++    header: "opxy/sample_analysis.hpp".} = object
++    sample*: SampleView
++    words*: ptr uint32
++    word_count*: uint32
++    info*: uint32
++
++  PrepareStatus* {.size: sizeof(cint), pure,
++    importcpp: "PrepareStatus", header: "opxy/sample_analysis.hpp".} = enum
++    prepare_failed = 0
++    prepare_done = 1
+     prepare_running = 2
+-  PrepareStatus * = enum_PrepareStatus
++
++const
++  prepare_failed* = PrepareStatus.prepare_failed
++  prepare_done* = PrepareStatus.prepare_done
++  prepare_running* = PrepareStatus.prepare_running
+diff -ruN a/src/openxy/private/raw/opxy/sample_engine.nim b/src/openxy/private/raw/opxy/sample_engine.nim
+--- a/src/openxy/private/raw/opxy/sample_engine.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/sample_engine.nim	2026-10-26 15:36:59
+@@ -1,41 +1,55 @@
++import openxy/private/raw/opxy/[sample_analysis, transport]
++
+ type
+-  PadSettings * = cint
+-  SampleRegion *{.inheritable, importcpp:"opxy::SampleRegion", header:"opxy/sample_engine.hpp".}= object
+-    begin *:cint
+-    `end` *:cint
+-    level *:cint
+-    reverse *:bool
+-    pitch_cents *:cint
+-  SampleAssignment *{.inheritable, importcpp:"opxy::SampleAssignment", header:"opxy/sample_engine.hpp".}= object
+-    filename *:cstring
+-    filename_bytes *:cint
+-    frames *:cint
+-    rate *:cint
+-    bpm_x10 *:cint
+-    replacing *:bool
+-    previous *:PadSettings
+-    recorded *:bool
+-  DrumControl *{.inheritable, importcpp:"opxy::DrumControl", header:"opxy/sample_engine.hpp".}= object
+-    knob *:cint
+-    direction *:cint
+-    pressed *:bool
+-    shifted *:bool
+-    held *:bool
+-  DrumPanel *{.inheritable, importcpp:"opxy::DrumPanel", header:"opxy/sample_engine.hpp".}= object
+-    pitch_cents *:cint
+-    repeat *:bool
+-    reverse *:bool
+-    level *:cint
+-    shifted *:array[2, array[16, cchar]]
+-  SampleBlock *{.inheritable, importcpp:"opxy::SampleBlock", header:"opxy/sample_engine.hpp".}= object
+-    output *:cint
+-    parameters *:cint
+-    pitch *:cint
+-    transport *:cint
+-    region *:SampleRegion
+-    analysis *:ptr cint
+-    settings *:PadSettings
+-    output_channels *:cint
+-    track_transpose *:cint
+-    drum_transpose *:cint
+-let sample_unity_level *:cint
++  PadSettings* = uint16
++
++  SampleRegion* {.importcpp: "opxy::SampleRegion",
++    header: "opxy/sample_engine.hpp".} = object
++    begin*: uint32
++    `end`*: uint32
++    level*: int32
++    reverse*: bool
++    pitch_cents*: int32
++
++  SampleAssignment* {.importcpp: "opxy::SampleAssignment",
++    header: "opxy/sample_engine.hpp".} = object
++    filename*: cstring
++    filename_bytes*: uint32
++    frames*: uint32
++    rate*: uint32
++    bpm_x10*: uint32
++    replacing*: bool
++    previous*: PadSettings
++    recorded*: bool
++
++  DrumControl* {.importcpp: "opxy::DrumControl",
++    header: "opxy/sample_engine.hpp".} = object
++    knob*: uint32
++    direction*: int32
++    pressed*: bool
++    shifted*: bool
++    held*: bool
++
++  DrumPanel* {.importcpp: "opxy::DrumPanel",
++    header: "opxy/sample_engine.hpp".} = object
++    pitch_cents*: int32
++    repeat*: bool
++    reverse*: bool
++    level*: uint32
++    shifted*: array[2, array[16, char]]
++
++  SampleBlock* {.importcpp: "opxy::SampleBlock",
++    header: "opxy/sample_engine.hpp".} = object
++    output*: ptr int32
++    parameters*: ptr int32
++    pitch*: ptr uint32
++    transport*: Transport
++    region*: SampleRegion
++    analysis*: ptr SampleAnalysis
++    settings*: PadSettings
++    output_channels*: uint32
++    track_transpose*: int32
++    drum_transpose*: int32
++
++const
++  sample_unity_level*: int32 = 1 shl 27
+diff -ruN a/src/openxy/private/raw/opxy/transport.nim b/src/openxy/private/raw/opxy/transport.nim
+--- a/src/openxy/private/raw/opxy/transport.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/transport.nim	2026-10-26 15:36:59
+@@ -1,4 +1,5 @@
+-type Transport *{.inheritable, importcpp:"opxy::Transport", header:"opxy/transport.hpp".}= object
+-  bpm_x10 *:cint
+-  ticks96 *:cint
+-  playing *:bool
++type
++  Transport* {.importcpp: "opxy::Transport", header: "opxy/transport.hpp".} = object
++    bpm_x10*: uint32
++    ticks96*: uint32
++    playing*: bool
+diff -ruN a/src/openxy/private/raw/opxy/types.nim b/src/openxy/private/raw/opxy/types.nim
+--- a/src/openxy/private/raw/opxy/types.nim	2026-10-26 15:36:59
++++ b/src/openxy/private/raw/opxy/types.nim	2026-10-26 15:36:59
+@@ -1,11 +1,12 @@
+ type
+-  i32 * = cint
+-  u32 * = cuint
+-  u16 * = cushort
+-  i16 * = cshort
+-  u8 * = uint8
+-  i64 * = clonglong
++  i32* = cint
++  u32* = cuint
++  u16* = cushort
++  i16* = cshort
++  u8* = uint8
++  i64* = clonglong
++
+ const
+-  q10_unit *:i32= 1024
+-  page_controls *:cuint= 4
+-  parameter_slots *:cuint= 8
++  q10_unit*: i32 = 1024
++  page_controls*: cuint = 4
++  parameter_slots*: cuint = 8

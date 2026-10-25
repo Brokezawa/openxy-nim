@@ -1,0 +1,4 @@
+[submodule "open-xy"]
+	path = open-xy
+	url = https://github.com/etcetc000/open-xy.git
+	branch = staging

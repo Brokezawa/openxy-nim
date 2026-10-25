@@ -1,7 +1,4 @@
-# This is just an example to get you started. A typical hybrid package
-# uses this file as the main entry point of the application.
+## Idiomatic Nim authoring SDK for OP-XY machines.
 
-import openxy/submodule
-
-when isMainModule:
-  echo(getWelcomeMessage())
+import openxy/[audio, concepts, draw, effect, machine, q31, sample, testkit, units]
+export audio, concepts, draw, effect, machine, q31, sample, testkit, units

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "sdk": "1.2",
+  "kind": "sample",
+  "description": "A small Nim sample player with pad, drum and analysis services.",
+  "identity": {
+    "engine": 48,
+    "page": 7
+  },
+  "presetDefaults": {
+    "amp": {
+      "decay": 0,
+      "release": 32767
+    }
+  }
+}

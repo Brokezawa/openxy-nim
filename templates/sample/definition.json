@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "id": "mysample",
+  "name": "My Sample",
+  "parameters": [
+    {
+      "id": "pitch",
+      "label": "Pitch",
+      "default": 0.5,
+      "mapping": {"kind": "linear", "minimum": -12, "maximum": 12},
+      "display": "semitones"
+    },
+    {
+      "id": "play",
+      "label": "Play",
+      "default": 0,
+      "mapping": {"kind": "enum", "labels": ["Loop", "Once"]},
+      "display": "enum"
+    },
+    {
+      "id": "volume",
+      "label": "Volume",
+      "default": 1,
+      "mapping": {"kind": "linear", "minimum": 0, "maximum": 1},
+      "display": "percent"
+    }
+  ],
+  "presets": {
+    "Loop": {"pitch": 0.5, "play": 0, "volume": 1},
+    "Once": {"pitch": 0.5, "play": 1, "volume": 1}
+  },
+  "resources": {
+    "voiceCapacity": 256,
+    "sampleAnalysis": 65536,
+    "chokeSameKey": 1,
+    "padSettings": 1,
+    "drumControls": 1,
+    "stereoOutput": 1
+  }
+}
