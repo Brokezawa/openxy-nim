@@ -12,8 +12,15 @@ const
 let templateRoot = currentSourcePath().parentDir
 let localSrc = templateRoot / ".." / ".." / "src"
 let depsSrc = templateRoot / "deps" / "openxy" / "src"
+let atlasLink = templateRoot / "deps" / "openxy.nimble-link"
+let linkedSrc =
+  if fileExists(atlasLink):
+    let lines = readFile(atlasLink).splitLines()
+    if lines.len > 0: lines[0].parentDir / "src" else: ""
+  else: ""
 let openxySrc = if dirExists(localSrc): localSrc
                  elif dirExists(depsSrc): depsSrc
+                 elif linkedSrc.len > 0 and dirExists(linkedSrc): linkedSrc
                  else: ""
 if openxySrc.len == 0:
   raise newException(OSError,

@@ -19,6 +19,20 @@ follow after the native path is stable.
 - A Clang/LLVM build with the WebAssembly target for previews
 - The pinned Blackfin toolchain for `compile`/`build`
 
+Tested environment for 0.1.0: Nim 2.2.12, Python 3.12.13, Node 26.12.1, LLVM
+23.1.4, Atlas 0.16.3, and SDK commit
+`fdf48e583ebb19fb5cd191687229bf77107f1aed`. CI uses these exact versions for
+Nim, Python, Node, and NumPy, and records the resolved Homebrew LLVM and Atlas
+versions in its logs. This is a best-effort setup, not a hermetic build
+environment.
+
+## Platform support
+
+Openxy 0.1.0 is tested locally on **macOS Apple Silicon**. Linux is tested in
+CI for host and template checks. **Windows is untested.** Browser preview is
+synth-only. Device builds are limited to the configuration recorded in
+[hardware testing](docs/hardware-test.md); a pass is not a recovery guarantee.
+
 ## Repository layout
 
 ```
@@ -158,6 +172,13 @@ browser preview for synths, Blackfin development compiles, and a three-machine
 firmware collection build. The SDK's stock startup table requires at least one
 synth or sample engine in a collection, so an effect is compiled with one.
 
+The 0.1.0 release is a source-only experimental developer preview. It does not
+include firmware, a stock OS, binaries, or a Nimble package. Hardware testing is
+the primary release gate. See [release](docs/release.md) and
+[hardware testing](docs/hardware-test.md).
+
 Browser/application work and the zero-touch Henka normalization are deferred.
 
-See `docs/api.md` and `docs/build.md` for the API and generation details.
+See [the manual](docs/manual.md), [API](docs/api.md),
+[build](docs/build.md), [testing](docs/testing.md), and
+[release](docs/release.md) for details.

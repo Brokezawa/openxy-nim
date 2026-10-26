@@ -1,0 +1,183 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux fast checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.12"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install host C++ compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+
+      - name: Verify SDK checkout
+        run: test -f open-xy/sdk.py || { echo "SDK submodule missing; initialize open-xy before CI"; exit 1; }
+
+      - name: Print tool versions
+        run: |
+          nim --version
+          nimble --version
+          clang++ --version | head -n 1
+
+      - name: Check package metadata
+        run: nimble check
+
+      - name: Run library tests
+        run: nim test
+
+      - name: Run fast template checks
+        run: nim checkTemplates
+
+  macos:
+    name: macOS full checks
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Assert Apple Silicon runner
+        run: test "$(uname -m)" = "arm64"
+
+      - name: Verify SDK checkout
+        run: test -f open-xy/sdk.py || { echo "SDK submodule missing; initialize open-xy before CI"; exit 1; }
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.12"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.13"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26.12.1"
+
+      - name: Cache Nimble packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nimble
+          key: ${{ runner.os }}-nimble-${{ hashFiles('openxy.nimble') }}
+          restore-keys: |
+            ${{ runner.os }}-nimble-
+
+      - name: Cache Blackfin toolchain
+        uses: actions/cache@v4
+        with:
+          path: open-xy/local/toolchain
+          key: ${{ runner.os }}-blackfin-${{ hashFiles('open-xy.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-blackfin-
+
+      - name: Install preview tools
+        run: |
+          brew install llvm lld
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.3.5
+
+      - name: Install Blackfin toolchain
+        run: python open-xy/sdk.py toolchain fetch
+
+      - name: Print tool versions
+        run: |
+          nim --version
+          python --version
+          node --version
+          "$(brew --prefix llvm)/bin/clang++" --version | head -n 1
+
+      - name: Check environment
+        run: nim doctor
+
+      - name: Run library tests
+        run: nim test
+
+      - name: Run full template checks
+        run: nim checkTemplates -- --full
+
+  atlas:
+    name: Atlas local-link smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.12"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify SDK checkout
+        run: test -f open-xy/sdk.py || { echo "SDK submodule missing; initialize open-xy before CI"; exit 1; }
+
+      - name: Install latest Atlas
+        run: nimble install -y 'https://github.com/nim-lang/atlas@#head'
+
+      - name: Print Atlas version
+        run: atlas --version
+
+      - name: Cache Atlas dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/atlas-smoke/deps
+          key: ${{ runner.os }}-atlas-${{ hashFiles('open-xy.lock', 'openxy.nimble', 'templates/synth/openxy_synth.nimble') }}
+          restore-keys: |
+            ${{ runner.os }}-atlas-
+
+      - name: Prepare scratch template
+        run: |
+          rm -rf "$RUNNER_TEMP/atlas-smoke"
+          mkdir -p "$RUNNER_TEMP/atlas-smoke"
+          cp -R templates/synth/. "$RUNNER_TEMP/atlas-smoke/"
+
+      - name: Initialize Atlas projects
+        working-directory: ${{ github.workspace }}
+        run: atlas init
+
+      - name: Link local openxy
+        working-directory: ${{ runner.temp }}/atlas-smoke
+        run: |
+          atlas init
+          atlas link "$GITHUB_WORKSPACE"
+          atlas install
+
+      - name: Run Atlas template checks
+        working-directory: ${{ runner.temp }}/atlas-smoke
+        run: |
+          nim test --skipParentCfg:on
+          nim gen --skipParentCfg:on
