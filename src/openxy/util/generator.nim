@@ -138,7 +138,7 @@ proc writeSampleHeaders(spec: MachineSpec; measurements: Measurements; directory
   if spec.hasAnalysis:
     header.add "opxy::u32 analysis_words(const opxy::SampleView&);\n"
     header.add "bool prepare_begin(Preparation&, const opxy::SampleView&, opxy::u32*, opxy::u32);\n"
-    header.add "opxy::u32 prepare_step(Preparation&, opxy::u32, opxy::u32&);\n"
+    header.add "opxy::PrepareStatus prepare_step(Preparation&, opxy::u32, opxy::u32&);\n"
     header.add "bool prepared(const Preparation&, opxy::SampleAnalysis&);\n"
   header.add "}\n"
   writeText(directory / "sample.h", header)
@@ -242,6 +242,10 @@ proc sampleWrapper(spec: MachineSpec; measurements: Measurements): string =
     result.add "  CPreparation {.importcpp: \"Preparation\", header: \"sample.h\".} = object\n"
     result.add "  ConstPreparation {.importcpp: \"const Preparation&\", header: \"sample.h\".} = object\n"
     result.add "  CSampleAnalysis {.importcpp: \"opxy::SampleAnalysis\", header: \"opxy/sample_analysis.hpp\".} = object\n"
+    result.add "  CPrepareStatus {.importcpp: \"opxy::PrepareStatus\", header: \"opxy/sample_analysis.hpp\".} = enum\n"
+    result.add "    cpfFailed = 0\n"
+    result.add "    cpfDone = 1\n"
+    result.add "    cpfRunning = 2\n"
   result.add """
 type
   CSampleBlock = object
@@ -335,9 +339,9 @@ proc prepare_begin(job: var CPreparation; sample: CConstSampleView;
   mysynth.prepareBegin(cast[ptr Preparation](addr job)[],
     cast[ptr SampleView](unsafeAddr sample)[], storage, words)
 
-proc prepare_step(job: var CPreparation; frames: uint32; cursor: var uint32): uint32
+proc prepare_step(job: var CPreparation; frames: uint32; cursor: var uint32): CPrepareStatus
     {.exportcpp: "prepare_step", raises: [].} =
-  uint32(mysynth.prepareStep(cast[ptr Preparation](addr job)[], frames, cursor))
+  CPrepareStatus(ord(mysynth.prepareStep(cast[ptr Preparation](addr job)[], frames, cursor)))
 
 proc prepared(job: ConstPreparation; analysis: var CSampleAnalysis): bool
     {.exportcpp: "prepared", raises: [].} =
@@ -424,6 +428,8 @@ proc prepare*(spec: var MachineSpec; measurements: Measurements): string =
       for item in spec.machine[key]:
         let relative = item.getStr
         copyPath(spec.project.root / relative, directory / relative)
+  if spec.presets.len > 0:
+    copyPath(spec.project.root / spec.presets, directory / spec.presets)
   writeMachineJson(spec, directory)
   writeVendor(directory)
   writeShim(directory)

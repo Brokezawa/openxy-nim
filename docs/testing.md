@@ -15,7 +15,8 @@ Expected:
 
 - Nim 2.2.12 or newer.
 - Every `nim doctor` line starts with `ok:`.
-- The `open-xy` submodule line reports the commit recorded in `open-xy.lock`.
+- The `open-xy` submodule line reports the commit recorded in `open-xy.lock`
+  (tag `v0.0.2`, SDK API 1.4, firmware 1.2.1).
 
 `nim doctor` checks the SDK checkout, Python, wasm-capable Clang, the Blackfin
 toolchain, and Node. A failure prints the command that fixes it.
@@ -31,7 +32,7 @@ nimble check
 Expected:
 
 ```text
-All 9 test files completed.
+All 10 test files completed.
 Template checks passed.
 The package "openxy" is valid.
 ```
@@ -61,7 +62,8 @@ This also runs:
 - Sample Blackfin device compile.
 
 The effect is not compiled standalone because the SDK rejects an effect-only
-collection. The three-machine collection check covers the effect.
+collection. The four-machine collection check covers the effect and the
+synth-eight template.
 
 ## Unit tests
 
@@ -76,6 +78,7 @@ collection. The three-machine collection check covers the effect.
 - `t_compile_failures` — invalid callback and unit-mixing cases.
 - `t_abi` — C++ ABI and generated-header checks.
 - `t_raw` — raw generated bindings.
+- `t_page_header` — C++/Nim page-header parity.
 
 ## Template checks
 
@@ -83,6 +86,15 @@ From a template directory inside the repository:
 
 ```sh
 cd templates/synth
+nim test --skipParentCfg:on
+nim gen --skipParentCfg:on
+nim compile --skipParentCfg:on
+```
+
+Synth-eight:
+
+```sh
+cd templates/synth-eight
 nim test --skipParentCfg:on
 nim gen --skipParentCfg:on
 nim compile --skipParentCfg:on
@@ -127,6 +139,9 @@ PASS: preview ABI, fixed memory, controls/pitch ownership, peak bounds, lifecycl
 My Synth preview built: .../sdkPreview
 ```
 
+The same command in `templates/synth-eight` builds `My Synth 8` and exercises
+the two-page header and 16 text slots.
+
 The preview output contains `manifest.json`, `engine.wasm`, and `panel.svg`.
 
 ## Device compile
@@ -135,6 +150,15 @@ Synth:
 
 ```sh
 cd templates/synth
+nim compile --skipParentCfg:on
+```
+
+Synth-eight:
+
+```sh
+cd templates/synth-eight
+nim test --skipParentCfg:on
+nim gen --skipParentCfg:on
 nim compile --skipParentCfg:on
 ```
 
@@ -148,8 +172,9 @@ nim compile --skipParentCfg:on
 The SDK prints a JSON memory report and a line like:
 
 ```text
-Memory 12.5 of 2040 KiB: mysynth 8.7 KiB, sdk 3.8 KiB
-Memory 75.5 of 2040 KiB: sdk 51.9 KiB, mysample 23.6 KiB
+Memory 29.7 of 2040 KiB: sdk 21.0 KiB, mysynth 8.7 KiB
+Memory 33.4 of 2040 KiB: sdk 21.1 KiB, mysynth8 12.3 KiB
+Memory 93.7 of 2040 KiB: sdk 69.1 KiB, mysample 24.6 KiB
 ```
 
 Memory values can change; the important result is a successful link below the
@@ -157,17 +182,18 @@ shared reservation.
 
 ## Three-machine collection
 
-The current workspace can compile all three generated machines:
+The current workspace can compile all four generated machines:
 
 ```sh
 python3 open-xy/sdk.py compile \
   --machine templates/synth/build/synth/mysynth \
+  --machine templates/synth-eight/build/synth/mysynth8 \
   --machine templates/sample/build/sample/mysample \
   --machine templates/effect/build/effect/myeffect \
   --out /tmp/openxy-collection
 ```
 
-Expected: a memory report for all three machines and the SDK, then:
+Expected: a memory report for all four machines and the SDK, then:
 
 ```text
 Non-bootable development module; not an OS image.

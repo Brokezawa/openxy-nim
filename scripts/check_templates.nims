@@ -16,6 +16,8 @@ type
 const cases = [
   TemplateCase(folder: "synth", id: "mysynth", kind: "synth",
     generated: @["core.h", "engine.cpp", "display.h", "generated/wrapper.nim", "machine.json"]),
+  TemplateCase(folder: "synth-eight", id: "mysynth8", kind: "synth",
+    generated: @["core.h", "engine.cpp", "display.h", "generated/wrapper.nim", "machine.json"]),
   TemplateCase(folder: "sample", id: "mysample", kind: "sample",
     generated: @["sample.h", "sample.cpp", "generated/wrapper.nim", "machine.json"]),
   TemplateCase(folder: "effect", id: "myeffect", kind: "effect",

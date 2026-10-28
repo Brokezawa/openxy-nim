@@ -11,7 +11,7 @@ git -C deps/openxy submodule update --init --recursive
 ```
 
 If the template is copied into an existing project, use
-`atlas use gh:Brokezwa/openxy` instead and run `atlas install`.
+`atlas use https://github.com/Brokezawa/openxy-nim` instead and run `atlas install`.
 
 ## Edit
 
@@ -41,8 +41,8 @@ nim clean
 `nim preview` reports that the SDK only previews synths. Use `nim compile` for
 the fast device check and `nim test` for the host sound checks.
 
-For `nim build`, set `stockOs` to the stock OP-XY OS 1.2.0 image, for example
-`../stock-1.2.0/os.ldr`, and optionally `layout` to the `layout.json` from the
+For `nim build`, set `stockOs` to the stock OP-XY OS 1.2.1 image, for example
+`../stock-1.2.1/os.ldr`, and optionally `layout` to the `layout.json` from the
 previous package.
 
 ## Callbacks

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sdk": "1.2",
+  "sdk": "1.4",
   "kind": "synth",
   "description": "A small Nim triangle/pulse synth with a two-node animated display.",
   "identity": {

@@ -40,7 +40,7 @@ type
     header: "opxy/draw.hpp".} = object
     paths*: array[4, Path]
     nodes*: array[256, Node]
-    texts*: array[4, Text]
+    texts*: array[16, Text]
     header*: array[4, array[8, char]]
 
   Input* {.importcpp: "opxy::draw::Input", header: "opxy/draw.hpp".} = object

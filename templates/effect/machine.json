@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sdk": "1.2",
+  "sdk": "1.4",
   "kind": "effect",
   "description": "A small Nim send effect with a delay buffer and transport sync.",
   "identity": {

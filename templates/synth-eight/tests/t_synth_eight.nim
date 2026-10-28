@@ -1,0 +1,55 @@
+import std/assertions
+
+import openxy
+import openxy/testkit
+import mysynth8
+
+block audio_block:
+  var voice: Voice
+  var shared: Shared
+  initialize(voice, shared, VoiceId(1))
+  var parameters = zeroParameters()
+  parameters[2] = Q31(0x40000000)
+  var output: array[BlockFrames, Q31]
+  render(voice, shared, VoiceId(1), output, parameters, zeroPitch())
+  var nonzero = false
+  for sample in output:
+    doAssert int32(sample) >= low(int32) and int32(sample) <= high(int32)
+    if sample != Q31(0):
+      nonzero = true
+  doAssert nonzero, "the synth should produce audio"
+
+block frame_block:
+  var state: DisplayState
+  displayReset(state)
+  var frame: mysynth8.Frame
+  var input = Input(track: 1, heldNotes: 1, noteOffSerial: 1)
+  discard displayFrame(state, input, frame)
+  assertFrameValid(frame)
+  doAssert frame.paths[0].key != 0
+  doAssert frame.paths[1].key != 0
+  doAssert frame.nodes[2].scale == int32(Unit)
+  doAssert frame.texts[0].chars[0] == 'b'
+  doAssert frame.texts[8].chars[0] == 'd'
+
+block page_switch:
+  var state: DisplayState
+  displayReset(state)
+  var frame: mysynth8.Frame
+  var input = Input(track: 1)
+  for index in 0 ..< 4:
+    input.shown[index] = uint8(index + 4)
+  input.elapsed = Q10(16)
+  display(state, input, frame)
+  display(state, input, frame)
+  assertFrameValid(frame)
+  doAssert frame.texts[0].chars[0] == 'd'
+
+block note_events:
+  var tracker: NoteTracker
+  doAssert tracker.update(Input(track: 2, heldNotes: 0)).holdStarted == false
+  let started = tracker.update(Input(track: 2, heldNotes: 3))
+  doAssert started.holdStarted
+  let ended = tracker.update(Input(track: 2, heldNotes: 0, noteOffSerial: 1))
+  doAssert ended.holdEnded
+  doAssert ended.noteReleased

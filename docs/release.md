@@ -7,14 +7,15 @@ automation guide.
 
 The 0.1.0 release is a **source-only experimental developer preview**:
 
-- Nim library, three templates, documentation, tests, and pinned SDK submodule.
+- Nim library, four templates, documentation, tests, and pinned SDK submodule.
 - No firmware image.
 - No stock OS file.
 - No Blackfin toolchain.
 - No binary archive.
 - No Nimble package.
 
-The release is published as an annotated Git tag and a GitHub Release. The
+The release is published as an annotated Git tag and a GitHub Release. It
+targets SDK tag `v0.0.2` at `c10d61b`, firmware `1.2.1`, and SDK API `1.4`. The
 release notes must say that the project is experimental and does not guarantee
 device recovery.
 
@@ -24,7 +25,7 @@ Hardware testing is the primary gate. It happens before CI.
 
 1. Freeze machine code.
 2. Create a local release-candidate commit.
-3. Build one three-machine package with the user's stock OS.
+3. Build one four-machine package with the user's stock OS.
 4. Run the test matrix in [hardware testing](hardware-test.md).
 5. Record the candidate commit, stock OS hash, package hash, machine IDs, and
    result in `docs/hardware-test.md`.
@@ -45,9 +46,10 @@ The stock OS is a local, private input. Do not commit it.
 ```sh
 python3 open-xy/sdk.py build \
   --machine templates/synth/build/synth/mysynth \
+  --machine templates/synth-eight/build/synth/mysynth8 \
   --machine templates/sample/build/sample/mysample \
   --machine templates/effect/build/effect/myeffect \
-  --stock-os /path/to/stock-1.2.0/os.ldr \
+  --stock-os /path/to/stock-1.2.1/os.ldr \
   --out /tmp/openxy-0.1.0-candidate
 ```
 
@@ -63,7 +65,7 @@ git ls-files -s open-xy
 ```
 
 `git submodule status` must report
-`fdf48e583ebb19fb5cd191687229bf77107f1aed`, and `git ls-files -s open-xy` must
+`c10d61b529521eff48dfcc619cb0d793e602e2eb`, and `git ls-files -s open-xy` must
 start with `160000`. A plain jj commit is not sufficient for CI, because GitHub
 Actions cannot initialize the SDK without the gitlink.
 
@@ -72,7 +74,8 @@ Record:
 - candidate commit;
 - `sha256` of `candidate/os.ldr`;
 - package hash;
-- stock OS version and hash;
+- stock OS version and hash (OS 1.2.1);
+- SDK tag and API version;
 - machine IDs;
 - date and tester.
 
@@ -121,7 +124,8 @@ openxy 0.1.0 — experimental developer preview
 Release notes must include:
 
 - the tested configuration and date;
-- the stock OS version;
+- SDK tag `v0.0.2` and API 1.4;
+- the stock OS 1.2.1 version;
 - the package hash or a link to the hardware record;
 - “Still experimental; no recovery guarantee.”;
 - the platform limits;
@@ -141,7 +145,7 @@ under the same version; create a new patch version.
 Optionally verify the published Atlas install path:
 
 ```sh
-atlas use gh:Brokezwa/openxy
+atlas use https://github.com/Brokezawa/openxy-nim
 atlas install
 git -C deps/openxy submodule update --init --recursive
 ```
@@ -154,3 +158,4 @@ Record any issue before the next release.
 - [Testing](testing.md)
 - [Changelog](../CHANGELOG.md)
 - [SDK pin](../open-xy.lock)
+- [SDK update workflow](sdk-update.md)

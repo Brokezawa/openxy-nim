@@ -19,3 +19,6 @@ block raw_surface:
   doAssert transport.bpm_x10 == 0
   var analysis: SampleAnalysis
   doAssert analysis.word_count == 0
+  var pageHeader: PageHeader
+  pageHeader.reset()
+  doAssert pageHeader.initialized == 0

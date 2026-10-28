@@ -1,7 +1,7 @@
 # openxy manual
 
 This manual is the entry point for writing an OP-XY machine in Nim. It covers
-installation, the three templates, the build tasks, preview, device compile,
+installation, the four templates, the build tasks, preview, device compile,
 and firmware packaging. Detailed API and generator information lives in
 [API](api.md) and [build](build.md).
 
@@ -46,7 +46,7 @@ git -C deps/openxy submodule update --init --recursive
 If you already have a project, use:
 
 ```sh
-atlas use gh:Brokezwa/openxy
+atlas use https://github.com/Brokezawa/openxy-nim
 atlas install
 ```
 
@@ -92,6 +92,8 @@ again and reload the browser.
 
 ## Sample and effect templates
 
+- `templates/synth-eight` implements the SDK two-page synth: eight controls,
+  page switching, the shared `PageHeader`, and 16 text slots.
 - `templates/sample` implements a sample engine with pad defaults, sample
   assignment, drum controls, drum panel, and sample analysis.
 - `templates/effect` implements a send effect with a delay buffer, transport,
@@ -100,9 +102,13 @@ again and reload the browser.
 Sample engines use stock sample page 7 when pad settings or drum controls are
 enabled. Effects use the stock FX page and an FX ID that stock leaves free.
 
-The SDK previews synths only. For sample and effect machines, use host tests and
-the device compile. The SDK also rejects an effect-only collection because the
-stock startup table requires at least one synth or sample engine.
+The SDK previews synths only. Both synth templates use the browser preview;
+sample and effect machines use host tests and the device compile. The SDK also
+rejects an effect-only collection because the stock startup table requires at
+least one synth or sample engine.
+
+The two-page synth uses `PageHeader` and a 16-slot frame. See
+[the API display section](api.md#page-header) for the callback example.
 
 ## Build tasks
 
@@ -150,17 +156,17 @@ nim compile
 Output: `build/out/<machineId>/sdkCompile/`.
 
 This builds the Blackfin module without a stock OS. It is the fast device check.
-The SDK prints the module memory. The current templates use about 12.5 KiB for
-the synth and 75.5 KiB for the sample engine; these numbers can change as the
-machine grows.
+The SDK prints the module memory. The current templates use about 29.7 KiB for
+the synth, 33.4 KiB for the two-page synth, and 93.7 KiB for the sample engine;
+these numbers can change as the machine grows.
 
 ## Firmware build
 
-`nim build` needs the exact stock OP-XY OS 1.2.0 image. Copy `os.ldr` from the
+`nim build` needs the exact stock OP-XY OS 1.2.1 image. Copy `os.ldr` from the
 device; do not commit it. Set the template constant:
 
 ```nim
-stockOs = "/absolute/path/to/stock-1.2.0/os.ldr"
+stockOs = "/absolute/path/to/stock-1.2.1/os.ldr"
 ```
 
 Optionally set `layout` to the `layout.json` from the previous package so
@@ -179,9 +185,10 @@ To build several machines together, call the SDK directly with repeated
 ```sh
 python3 open-xy/sdk.py build \
   --machine build/synth/mysynth \
+  --machine build/synth-eight/mysynth8 \
   --machine build/sample/mysample \
   --machine build/effect/myeffect \
-  --stock-os /path/to/stock-1.2.0/os.ldr \
+  --stock-os /path/to/stock-1.2.1/os.ldr \
   --out builds/collection-001
 ```
 
@@ -222,3 +229,4 @@ installing a package on hardware.
 - [Testing](testing.md)
 - [Release process](release.md)
 - [Hardware testing](hardware-test.md)
+- [SDK updates](sdk-update.md)

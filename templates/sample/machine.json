@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sdk": "1.2",
+  "sdk": "1.4",
   "kind": "sample",
   "description": "A small Nim sample player with pad, drum and analysis services.",
   "identity": {

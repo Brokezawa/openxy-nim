@@ -6,4 +6,4 @@ srcDir        = "src"
 installExt    = @["nim"]
 
 requires "nim >= 2.2.12"
-requires "gh:Brokezwa/openxy"
+requires "gh:Brokezawa/openxy-nim"

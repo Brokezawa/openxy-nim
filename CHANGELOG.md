@@ -12,8 +12,11 @@ All notable changes to openxy are recorded here.
 - Metadata validation, target-ABI measurement, and C++ machine generation.
 - Synth, sample, and effect templates with host tests.
 - Browser preview for synths.
-- Blackfin device compile and three-machine collection build.
-- Pinned OP-XY SDK submodule and lock file.
+- Blackfin device compile and four-machine collection build.
+- Pinned OP-XY SDK tag `v0.0.2` (`c10d61b`), firmware 1.2.1, and SDK API 1.4.
+- SDK 1.4 page headers, page switching, machine presets, 16 text slots, and
+  effect alternates.
+- Eight-control `synth-eight` template with the shared two-row header.
 - Optional Henka raw-binding regeneration with a checked-in normalization patch.
 - GitHub Actions release checks for Linux, macOS, and Atlas.
 - Manual, testing, release, and hardware-testing documentation.

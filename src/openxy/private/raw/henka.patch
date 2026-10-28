@@ -125,7 +125,7 @@ diff -ruN a/src/openxy/private/raw/opxy/draw.nim b/src/openxy/private/raw/opxy/d
 +    header: "opxy/draw.hpp".} = object
 +    paths*: array[4, Path]
 +    nodes*: array[256, Node]
-+    texts*: array[4, Text]
++    texts*: array[16, Text]
 +    header*: array[4, array[8, char]]
 +
 +  Input* {.importcpp: "opxy::draw::Input", header: "opxy/draw.hpp".} = object
@@ -431,3 +431,44 @@ diff -ruN a/src/openxy/private/raw/opxy/types.nim b/src/openxy/private/raw/opxy/
 +  q10_unit*: i32 = 1024
 +  page_controls*: cuint = 4
 +  parameter_slots*: cuint = 8
+--- a/src/openxy/private/raw/opxy/page_header.nim
++++ b/src/openxy/private/raw/opxy/page_header.nim
+@@ -1,15 +1,23 @@
+-type PageHeader *{.inheritable, importcpp:"opxy::draw::PageHeader", header:"opxy/page_header.hpp".}= object
+-  initialized *:cint
+-  track *:cint
+-  page *:cint
+-  position *:cint
+-  elapsed *:cint
+-proc reset *(this :var PageHeader) {.importcpp:"#.reset(@)", header:"opxy/page_header.hpp".}
+-let
+-  page_header_nodes *:cint
+-  page_header_slots *:array[2, array[4, cint]]
+-proc header_amount *(`out` :cstring; capacity :cint; value :cint) {.importcpp:"opxy::draw::header_amount(@)", header:"opxy/page_header.hpp".}
+-proc remaining *(time :cint) :cint {.importcpp:"opxy::draw::page_header_detail::remaining(@)", header:"opxy/page_header.hpp".}
+-proc mix *(a :cint; b :cint; position :cint) :cint {.importcpp:"opxy::draw::page_header_detail::mix(@)", header:"opxy/page_header.hpp".}
+-proc lowercase *(`out` :cstring; title :cstring) {.importcpp:"opxy::draw::page_header_detail::lowercase(@)", header:"opxy/page_header.hpp".}
+-proc page_header *[F](state :var PageHeader; input :cint; frame :var F; titles :array[8, cstring]; values :array[8, cchar]; first_node :cint; slots :array[2, array[4, cint]]) {.importcpp:"opxy::draw::page_header<'*0>(@)", header:"opxy/page_header.hpp".}
++## Raw SDK 1.4 page-header surface. The generated C++ template is not usable
++## through the plain Nim `Frame` mirror, so the public helper is pure Nim. This
++## raw module keeps the pinned type and constants available for provenance.
++
++type
++  PageHeader* {.importcpp: "opxy::draw::PageHeader",
++    header: "opxy/page_header.hpp".} = object
++    initialized*: uint32
++    track*: uint32
++    page*: uint32
++    position*: int32
++    elapsed*: int32
++
++const
++  page_header_nodes*: uint32 = 8
++  page_header_texts*: uint32 = 16
++  page_header_slots*: array[2, array[4, uint8]] = [[0, 1, 2, 3], [4, 5, 6, 7]]
++
++proc reset*(state: var PageHeader) {.
++  importcpp: "#.reset(@)", header: "opxy/page_header.hpp".}
++
++proc header_amount*(output: cstring; capacity: uint32; value: int32) {.
++  importcpp: "opxy::draw::header_amount(@)", header: "opxy/page_header.hpp".}

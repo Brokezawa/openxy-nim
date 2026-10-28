@@ -22,6 +22,8 @@ type
     hasBuffer*: bool
     hasTransport*: bool
     dryParameter*: int
+    sdkMinor*: int
+    presets*: string
 
   Measurements* = object
     voiceBytes*, voiceAlignment*, sharedBytes*: int
@@ -97,7 +99,7 @@ proc validControlLabel(value: string): bool =
 
 proc validateParameter(parameter: JsonNode; index: int; kind: MachineKind) =
   require(parameter != nil and parameter.kind == JObject, "parameter " & $index & " must be an object")
-  let alternate = kind == mkSynth and index >= 4
+  let alternate = kind in {mkSynth, mkEffect} and index >= 4
   var allowed = @["id", "label", "default", "mapping", "display"]
   if alternate: allowed.add "control"
   allowedKeys(parameter, allowed, "parameter")
@@ -108,7 +110,10 @@ proc validateParameter(parameter: JsonNode; index: int; kind: MachineKind) =
     "control labels are at most 8 letters, digits or spaces")
   let default = numberField(parameter, "default")
   require(default >= 0 and default <= 1, "parameter defaults are normalized 0..1")
-  if alternate:
+  if kind == mkSynth and alternate:
+    require(parameter.hasKey("control"),
+      "a synth alternate parameter must name its control position")
+  if parameter.hasKey("control"):
     let control = intField(parameter, "control")
     require(control >= 0 and control < 4, "alternate controls name a position 0..3")
   let mapping = field(parameter, "mapping")
@@ -158,7 +163,7 @@ proc validateParameter(parameter: JsonNode; index: int; kind: MachineKind) =
       numberField(mapping, "maximum") == 1,
       "a division control maps linearly from 0 to 1")
 
-proc validateDisplay(display: JsonNode) =
+proc validateDisplay(display: JsonNode; sdkMinor: int) =
   allowedKeys(display, ["stateBytes", "stateAlignment", "paths", "points", "nodes", "texts", "palette"],
     "display")
   requireKeys(display, ["stateBytes", "stateAlignment", "paths", "points", "nodes", "texts", "palette"],
@@ -173,11 +178,13 @@ proc validateDisplay(display: JsonNode) =
   let texts = intField(display, "texts")
   let palette = intField(display, "palette")
   require(paths in 0 .. 4 and points in 0 .. 64 and nodes in 1 .. 256 and
-    texts in 0 .. 4 and palette in 1 .. 16, "display budget outside SDK limits")
+    texts in 0 .. 16 and palette in 1 .. 16, "display budget outside SDK limits")
+  require(texts <= 4 or sdkMinor >= 3,
+    "more than four display text slots need SDK 1.3 or newer")
   require((points >= 2) == (paths > 0), "paths have 2..64 points; a display without paths declares 0")
   require(paths <= nodes, "each path is also a node")
 
-proc validateResources(definition: JsonNode; kind: MachineKind; page: int): tuple[
+proc validateResources(definition: JsonNode; kind: MachineKind; page, sdkMinor: int): tuple[
     display: DisplayShape; hasAnalysis, hasPadSettings, hasDrumControls, hasBuffer,
     hasTransport: bool] =
   let resources = field(definition, "resources")
@@ -198,7 +205,7 @@ proc validateResources(definition: JsonNode; kind: MachineKind; page: int): tupl
       "sharedBytes must be whole words")
     let peak = intField(resources, "outputPeakQ31")
     require(peak > 0 and peak <= 0x7fffffff, "outputPeakQ31 must be positive")
-    validateDisplay(field(resources, "display"))
+    validateDisplay(field(resources, "display"), sdkMinor)
     result.display = DisplayShape(
       paths: intField(resources["display"], "paths"),
       points: intField(resources["display"], "points"),
@@ -232,10 +239,10 @@ proc validateResources(definition: JsonNode; kind: MachineKind; page: int): tupl
     result.hasTransport = boolFlag(resources, "transport")
   result
 
-proc validateDefinition(definition: JsonNode; kind: MachineKind; page: int): tuple[
+proc validateDefinition(definition: JsonNode; kind: MachineKind; page, sdkMinor: int): tuple[
     name: string; display: DisplayShape; hasAnalysis, hasPadSettings, hasDrumControls,
     hasBuffer, hasTransport: bool; dryParameter: int] =
-  allowedKeys(definition, ["schema", "id", "name", "parameters", "presets", "resources"], "definition")
+  allowedKeys(definition, ["schema", "id", "name", "parameters", "presets", "resources", "press"], "definition")
   requireKeys(definition, ["schema", "id", "name", "parameters", "presets", "resources"], "definition")
   require(intField(definition, "schema") == 1, "unknown definition schema")
   let identity = stringField(definition, "id")
@@ -262,7 +269,20 @@ proc validateDefinition(definition: JsonNode; kind: MachineKind; page: int): tup
     for _, value in preset:
       require(value.kind in {JInt, JFloat} and value.getFloat >= 0 and value.getFloat <= 1,
         "preset values are normalized 0..1")
-  let resources = validateResources(definition, kind, page)
+  let press = if definition.hasKey("press"): stringField(definition, "press") else: ""
+  if press.len > 0:
+    require(kind == mkSynth and press == "page", "press must be \"page\" on a synth")
+    require(sdkMinor >= 3, "press: page needs SDK 1.3 or newer")
+    require(parameters.len >= 5 and parameters.len <= 8, "press: page needs five to eight parameters")
+    var used: array[4, bool]
+    for index in 4 ..< parameters.len:
+      let parameter = parameters[index]
+      let control = if parameter.hasKey("control"): intField(parameter, "control") else: index mod 4
+      require(not used[control], "alternate controls must use distinct positions")
+      used[control] = true
+    if parameters.len < 8:
+      require(sdkMinor >= 4, "a partial second page needs SDK 1.4 or newer")
+  let resources = validateResources(definition, kind, page, sdkMinor)
   result = (name, resources.display, resources.hasAnalysis, resources.hasPadSettings,
     resources.hasDrumControls, resources.hasBuffer, resources.hasTransport, -1)
 
@@ -301,7 +321,7 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
   except JsonParsingError as error:
     fail("invalid JSON: " & error.msg)
   allowedKeys(machine, ["schema", "sdk", "kind", "description", "identity", "sources", "includes",
-    "icon", "presetDefaults", "dryParameter"], "machine.json")
+    "icon", "presetDefaults", "presets", "dryParameter"], "machine.json")
   require(intField(machine, "schema") == 1, "unknown machine.json schema")
   let sdkVersion = stringField(machine, "sdk")
   let versionParts = sdkVersion.split('.')
@@ -309,8 +329,9 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
     "machine.json sdk must be <major>.<minor>")
   for part in versionParts:
     require(part.allCharsInSet({'0'..'9'}), "machine.json sdk must be <major>.<minor>")
-  require(versionParts[0] == "1" and versionParts[1].parseInt <= 2,
+  require(versionParts[0] == "1" and versionParts[1].parseInt <= 4,
     "machine.json targets unsupported SDK: " & sdkVersion)
+  let sdkMinor = versionParts[1].parseInt
   let kindText = stringField(machine, "kind")
   let kind = parseMachineKind(kindText)
   let description = stringField(machine, "description")
@@ -339,7 +360,16 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
       allowedKeys(amp, ["attack", "decay", "release", "sustain"], "amp defaults")
       for _, value in amp:
         require(value.kind == JInt and value.getInt in 0 .. 32767, "invalid amp default")
-  let definitionResult = validateDefinition(definition, kind, page)
+  var presets = ""
+  if machine.hasKey("presets"):
+    require(kind != mkEffect, "effects cannot declare a presets folder")
+    require(sdkMinor >= 3, "a presets folder needs SDK 1.3 or newer")
+    presets = stringField(machine, "presets")
+    require(not presets.isAbsolute and ".." notin presets.split({'/', '\\'}),
+      "presets must stay inside the machine folder: " & presets)
+    require(dirExists(project.root / presets),
+      "presets folder does not exist: " & presets)
+  let definitionResult = validateDefinition(definition, kind, page, sdkMinor)
   require(stringField(definition, "id") == project.id,
     "definition.json id must equal machineId: " & project.id)
   var spec = MachineSpec(
@@ -355,6 +385,8 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
     hasBuffer: definitionResult.hasBuffer,
     hasTransport: definitionResult.hasTransport,
     dryParameter: definitionResult.dryParameter,
+    sdkMinor: sdkMinor,
+    presets: presets,
   )
   if machine.hasKey("dryParameter"):
     require(kind == mkEffect, "dryParameter names a normalized control on an effect")

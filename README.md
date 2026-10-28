@@ -21,7 +21,7 @@ follow after the native path is stable.
 
 Tested environment for 0.1.0: Nim 2.2.12, Python 3.12.13, Node 26.12.1, LLVM
 23.1.4, Atlas 0.16.3, and SDK commit
-`fdf48e583ebb19fb5cd191687229bf77107f1aed`. CI uses these exact versions for
+`c10d61b529521eff48dfcc619cb0d793e602e2eb` (SDK API 1.4). CI uses these exact versions for
 Nim, Python, Node, and NumPy, and records the resolved Homebrew LLVM and Atlas
 versions in its logs. This is a best-effort setup, not a hermetic build
 environment.
@@ -38,9 +38,10 @@ synth-only. Device builds are limited to the configuration recorded in
 ```
 src/openxy/          public SDK, units, display, sample/effect views, testkit
 src/openxy/util/     validation, measurement, generation, SDK invocation
-templates/synth/     self-contained synth machine and build tasks
-templates/sample/    self-contained sample engine and build tasks
-templates/effect/    self-contained send effect and build tasks
+templates/synth/       self-contained four-control synth and build tasks
+templates/synth-eight/ self-contained eight-control two-page synth
+templates/sample/      self-contained sample engine and build tasks
+templates/effect/      self-contained send effect and build tasks
 scripts/             maintainer and template task implementations
 open-xy/             pinned OP-XY SDK checkout (submodule target)
 open-xy.lock         SDK commit checked by `nim doctor`
@@ -48,8 +49,9 @@ open-xy.lock         SDK commit checked by `nim doctor`
 
 ## SDK pin
 
-`open-xy.lock` records the SDK commit this checkout expects. Initialize the SDK
-once after cloning an openxy project:
+`open-xy.lock` records the SDK tag `v0.0.2` at commit `c10d61b`, targeting
+firmware 1.2.1 and SDK API 1.4. Initialize the SDK once after cloning an openxy
+project:
 
 ```sh
 git -C deps/openxy submodule update --init --recursive
@@ -61,8 +63,8 @@ and the expected lock value.
 
 ## Use a template
 
-Copy one of `templates/synth`, `templates/sample`, or `templates/effect` to
-your project, then:
+Copy one of `templates/synth`, `templates/synth-eight`, `templates/sample`, or
+`templates/effect` to your project, then:
 
 ```sh
 atlas init
@@ -74,7 +76,8 @@ nim gen
 
 | Template | Machine kind | Preview |
 | --- | --- | --- |
-| `templates/synth` | synth with a retained display | browser preview |
+| `templates/synth` | four-control synth with a retained display | browser preview |
+| `templates/synth-eight` | eight-control two-page synth with `PageHeader` | browser preview |
 | `templates/sample` | sample engine with pad, drum and analysis services | device only |
 | `templates/effect` | send effect with buffer and transport | device only |
 
@@ -118,9 +121,9 @@ arguments passed to a custom task.
 
 ## Firmware build inputs
 
-`nim build` needs the exact stock OP-XY OS 1.2.0 image. Copy `os.ldr` from the
+`nim build` needs the exact stock OP-XY OS 1.2.1 image. Copy `os.ldr` from the
 device (see the SDK's `docs/build.md`, step 2) and set the template's `stockOs`
-to it, for example `stockOs = "../stock-1.2.0/os.ldr"`. The SDK's default stock
+to it, for example `stockOs = "../stock-1.2.1/os.ldr"`. The SDK's default stock
 content catalog is used unless the SDK command is given another
 `--stock-content` folder. Pass the previous package's `layout.json` through the
 template's `layout` constant to keep machine numbers stable.
@@ -130,9 +133,10 @@ To build several machines together, use the SDK's collection support directly:
 ```sh
 python3 open-xy/sdk.py build \
   --machine build/synth/mysynth \
+  --machine build/synth-eight/mysynth8 \
   --machine build/sample/mysample \
   --machine build/effect/myeffect \
-  --stock-os stock-1.2.0/os.ldr \
+  --stock-os stock-1.2.1/os.ldr \
   --out builds/collection-001
 ```
 
@@ -166,9 +170,10 @@ Nim's conditional-compilation boilerplate.
 
 ## Status
 
-The synth, sample, and effect paths are implemented: typed API, validation,
-measurement, generator, templates, host tests, sample/effect service coverage,
-browser preview for synths, Blackfin development compiles, and a three-machine
+The synth, sample, and effect paths are implemented for SDK API 1.4 and
+firmware 1.2.1: typed API, validation, measurement, generator, four templates
+including the two-page synth, host tests, sample/effect service coverage,
+browser preview for synths, Blackfin development compiles, and a four-machine
 firmware collection build. The SDK's stock startup table requires at least one
 synth or sample engine in a collection, so an effect is compiled with one.
 
@@ -180,5 +185,5 @@ the primary release gate. See [release](docs/release.md) and
 Browser/application work and the zero-touch Henka normalization are deferred.
 
 See [the manual](docs/manual.md), [API](docs/api.md),
-[build](docs/build.md), [testing](docs/testing.md), and
-[release](docs/release.md) for details.
+[build](docs/build.md), [testing](docs/testing.md),
+[release](docs/release.md), and [SDK updates](docs/sdk-update.md) for details.

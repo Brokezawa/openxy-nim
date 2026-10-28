@@ -6,7 +6,7 @@
 ## `nim regen` regenerates the upstream output and applies that patch.
 
 import openxy/private/raw/opxy/[types, audio, q31, draw, sample, sample_engine,
-  sample_analysis, effect, transport]
+  sample_analysis, effect, transport, page_header]
 
 export types, audio, q31, draw, sample, sample_engine, sample_analysis, effect,
-  transport
+  transport, page_header

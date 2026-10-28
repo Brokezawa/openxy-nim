@@ -42,13 +42,67 @@ SDK including `max(Paths, 1)` paths and `max(Texts, 1)` texts. Declare the frame
 shape explicitly:
 
 ```nim
-type Frame = openxy.Frame[2, 64, 2, 0, 16]
+type Frame = openxy.Frame[2, 64, 10, 16, 16]
 ```
+
+A frame may declare 0 to 16 text slots. More than four text slots require SDK
+1.3 or newer. The declared `Texts` count must match `definition.json` and the
+generated C++ frame.
 
 Helpers: `place`, `hide`, `shade`, `turn`, `text`, `header`, `rotation`,
 `sine`, `sweep`, `valid`, and `NoteTracker.update`. `NoteTracker` reports
 `holdStarted`, `holdEnded`, and `noteReleased`; the first snapshot and track
 changes only establish a baseline.
+
+### Page header
+
+SDK 1.4 adds the shared two-row synth header. Add `PageHeader` to
+`DisplayState`, reset it from `displayReset`, and fill it from `display`:
+
+```nim
+type
+  DisplayState = object
+    phase: uint32
+    header: PageHeader
+
+  Frame = openxy.Frame[2, 64, 10, 16, 16]
+
+proc displayReset(state: var DisplayState) =
+  state.phase = 0
+  state.header.reset()
+
+proc display(state: var DisplayState; input: Input; frame: var Frame) =
+  const titles: array[8, string] = [
+    "Blend", "Width", "Level", "Motion",
+    "Drive", "Crush", "Rectify", "Smooth",
+  ]
+  var values: array[8, HeaderText]
+  for index in 0 ..< values.len:
+    headerAmount(values[index], input.slots[index])
+  const slots: PageHeaderSlots = [[0'u8, 1, 2, 3], [4'u8, 5, 6, 7]]
+  pageHeader(state.header, input, frame, titles, values, 2, slots)
+```
+
+`PageHeader` is a 20-byte value with private state. `headerAmount` writes a
+rounded 0..100 caption without a percent sign. `pageHeader` requires at least
+16 text slots, eight header nodes after its static `firstNode`, and no C++
+Frame shim. Nodes 0 and 1 are the template's path nodes; nodes 2 through 9 are
+the header bars. `DefaultPageHeaderSlots` is the standard
+`[[0, 1, 2, 3], [4, 5, 6, 7]]` page map.
+
+## SDK 1.4 metadata
+
+A machine declares `machine.json.sdk` as `"1.4"` to use the current surface.
+The SDK builds machines from 1.0 through 1.4.
+
+- `definition.json` accepts `"press": "page"` for five- to eight-parameter
+  synths. SDK 1.3 supports a full second page; a partial page requires 1.4.
+- Effects accept up to eight controls. Parameters after the fourth are
+  alternates on the send page.
+- `machine.json.presets` names a folder of device-authored preset files. Openxy
+  copies the folder and the SDK validates its contents.
+- `templates/synth-eight` is the idiomatic Nim translation of the SDK
+  `synth-eight` starter.
 
 ## Callback contracts
 

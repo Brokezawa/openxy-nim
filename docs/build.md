@@ -1,5 +1,8 @@
 # Build and generation
 
+The current SDK pin is tag `v0.0.2` at `c10d61b`, with SDK API 1.4 and
+firmware 1.2.1. The profile and stock OS names are part of the generated build.
+
 ## Template ownership
 
 Each machine template owns its tasks in `config.nims` and its dependency

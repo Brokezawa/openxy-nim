@@ -38,7 +38,7 @@ ensureDir(raw)
 let headers = [
   "opxy/types.hpp", "opxy/audio.hpp", "opxy/q31.hpp", "opxy/draw.hpp",
   "opxy/sample.hpp", "opxy/sample_engine.hpp", "opxy/sample_analysis.hpp",
-  "opxy/effect.hpp", "opxy/transport.hpp",
+  "opxy/effect.hpp", "opxy/transport.hpp", "opxy/page_header.hpp",
 ]
 var command = quoteShell(henka) & " --cpp --std=c++17 --inpath=" &
   quoteShell(sdk / "sdk" / "include") & " --outpath=" & quoteShell(raw)

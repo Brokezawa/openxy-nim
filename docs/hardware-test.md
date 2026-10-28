@@ -5,7 +5,8 @@ it because CI has no stock OS and no OP-XY device.
 
 ## Safety
 
-- Use a stock OP-XY OS 1.2.0 image that you own.
+- Use a stock OP-XY OS 1.2.1 image that you own and the SDK tag `v0.0.2`
+  (API 1.4).
 - Keep a copy of the stock OS outside the repository.
 - Do not commit the stock OS, firmware package, sample content, or device
   identifiers.
@@ -18,13 +19,15 @@ Fill this table from the candidate package and the SDK build report.
 
 | Field | Value |
 | --- | --- |
-| Candidate commit | |
-| Candidate package path | |
-| Package hash (`candidate/os.ldr`) | |
-| Stock OS version | |
-| Stock OS SHA-256 | |
-| Machine IDs | mysynth, mysample, myeffect |
-| Tester and date | |
+| Candidate commit | `f9d05c6c7d10` (jj working candidate; final Git release commit pending) |
+| Candidate package path | `/Users/zawa/Projects/nim/open-xy-nim/openxy/templates/sample/build/out/0.1.0-candidate-synth8` |
+| Package hash (`candidate/os.ldr`) | `1d42f109c8f44153b2ab48dd2ebe6c0889838d039c19d49e80a6d6ecd159bd8e` |
+| Stock OS version | 1.2.1 |
+| SDK tag / API | v0.0.2 / 1.4 |
+| Stock OS SHA-256 | `60358afdaa9b58ed40411602f6d5d4e1e3e02553ff2da7e25038e71dd002b52f` |
+| Machine IDs | mysynth, mysynth8, mysample, myeffect |
+| Tester and date | User, 2026-10-29 |
+| Build profile | `opxy-1.2.1`, profiling enabled, fresh-source rebuild matched |
 
 The SDK build report contains `os_sha256` and memory sizes. Record the command
 used to build the package.
@@ -35,39 +38,49 @@ Mark each check only after observing it on the device.
 
 ### Install and boot
 
-- [ ] Copy the candidate `os.ldr` to `/os.ldr` using the SDK install steps.
-- [ ] Copy `content/op1_factory.json` to `/content/op1_factory.json`.
-- [ ] Copy `content/display/mysynth.svg` to `/content/display/mysynth.svg`.
-- [ ] Reboot the device.
-- [ ] The device reaches the normal OS and does not hang.
+- [x] Copy the candidate `os.ldr` to `/os.ldr` using the SDK install steps.
+- [x] Copy `content/op1_factory.json` to `/content/op1_factory.json`.
+- [x] Copy `content/display/mysynth.svg` to `/content/display/mysynth.svg`.
+- [x] Copy `content/display/mysynth8.svg` to `/content/display/mysynth8.svg`.
+- [x] Reboot the device.
+- [x] The device reaches the normal OS and does not hang.
 
 ### Synth
 
-- [ ] The synth is selectable from the stock UI.
-- [ ] Notes produce audio.
-- [ ] The four controls change the sound.
-- [ ] The display draws and animates without corruption.
-- [ ] Note release and voice reuse do not crash or hang.
+- [x] The synth is selectable from the stock UI.
+- [x] Notes produce audio.
+- [x] The four controls change the sound.
+- [x] The display draws and animates without corruption.
+- [x] Note release and voice reuse do not crash or hang.
+
+### Synth-eight
+
+- [x] `mysynth8` is selectable from the stock UI.
+- [x] Notes produce audio.
+- [x] All eight controls change the sound.
+- [x] The two-row header switches pages when an encoder is pressed.
+- [x] The header titles and values update without corruption.
+- [x] Note release and voice reuse do not crash or hang.
 
 ### Sample
 
-- [ ] A sample can be assigned and played.
-- [ ] Pad settings and playback work.
-- [ ] The drum page opens and its controls respond.
-- [ ] The sample does not crash or leave a stuck voice.
+- [x] A sample can be assigned and played.
+- [x] Pad settings and playback work.
+- [x] The drum page opens and its controls respond.
+- [x] The sample does not crash or leave a stuck voice.
 
 ### Effect
 
-- [ ] The effect is selectable on a send track.
-- [ ] The effect changes the send audio.
-- [ ] The dry control works.
-- [ ] The effect does not crash or hang when bypassed or removed.
+- [x] The effect is selectable on a send track.
+- [x] The effect changes the send audio.
+- [x] The dry control works.
+- [x] The effect does not crash or hang when bypassed or removed.
 
 ### Reboot
 
-- [ ] A second reboot reaches the OS.
-- [ ] The three machines remain selectable.
-- [ ] No repeated crash or recovery screen occurs.
+- [x] A second reboot reaches the OS.
+- [x] The four machines remain selectable.
+- [x] No repeated crash or recovery screen occurs.
 
 ## Result
 
@@ -76,13 +89,15 @@ Mark each check only after observing it on the device.
 | PASS | Every required check above was observed on the recorded configuration. |
 | FAIL | At least one required check failed, or the device did not boot. |
 
-Result: **Not recorded yet.**
+Result: **PASS**
 
 Notes:
 
 ```text
-Add device model, OS version, test date, and any observed limitation.
-Do not include private sample names, serial numbers, or stock OS files.
+All four machines booted and behaved as expected.
+No bug, crash, stuck voice, display corruption, or recovery screen was observed.
+Tested on OP-XY OS 1.2.1 with SDK tag v0.0.2, API 1.4.
+This remains an experimental build; no recovery guarantee.
 ```
 
 ## If the result is FAIL
@@ -96,8 +111,8 @@ Repeat this matrix if machine code, runtime, or generator changed.
 Record the exact configuration in the release notes:
 
 ```text
-Tested on OP-XY OS 1.2.0 with the <candidate-commit> package on <date>.
-Still experimental; no recovery guarantee.
+Tested on OP-XY OS 1.2.1 with the <candidate-commit> package on <date>.
+SDK tag v0.0.2, API 1.4. Still experimental; no recovery guarantee.
 ```
 
 See [release](release.md) for the remaining tag steps.

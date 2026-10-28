@@ -3,6 +3,8 @@
 ## This is a plain Nim mirror of `opxy/draw.hpp`. The generated adapter casts
 ## SDK-owned storage to these types.
 
+import std/assertions
+
 import openxy/audio
 import openxy/q31
 import openxy/units
@@ -19,8 +21,14 @@ const
   TextCapacity* = 24
   HeaderCapacity* = 8
   NotesUnavailable* = 0xffffffff'u32
+  PageHeaderNodes* = 8
+  PageHeaderTexts* = 16
+  DefaultPageHeaderSlots* = [[0'u8, 1, 2, 3], [4'u8, 5, 6, 7]]
 
 type
+  HeaderText* = array[HeaderCapacity, char]
+  PageHeaderSlots* = array[2, array[4, uint8]]
+
   Point* = object
     x*, y*: int32
 
@@ -65,6 +73,13 @@ type
     track*: uint32
     heldNotes*: uint32
     noteOffSerial*: uint32
+
+  PageHeader* = object
+    initialized: uint32
+    track: uint32
+    page: uint32
+    position: int32
+    elapsed: int32
 
 template noteOnSerial*(input: Input): uint32 = input.noteSerial
 
@@ -165,6 +180,122 @@ func header*[Paths, Points, Nodes, Texts, Palette](
   if position < 0 or position >= PageControls:
     return
   copyText(frame.header[position], value)
+
+func floorDivQ10(value: int32): int32 {.inline.} =
+  result = value div 1024
+  if value < 0 and value mod 1024 != 0:
+    dec result
+
+func headerAmount*(output: var openArray[char]; value: Q31) =
+  let n =
+    if int32(value) < 0: 0'u32
+    else: ((uint32(int32(value)) shr 10) * 100 + (1'u32 shl 20)) shr 21
+  var number: array[4, char]
+  var at = 0
+  if n >= 100:
+    number[at] = '1'
+    inc at
+  if n >= 10:
+    number[at] = char(ord('0') + int((n div 10) mod 10))
+    inc at
+  number[at] = char(ord('0') + int(n mod 10))
+  inc at
+  copyText(output, number.toOpenArray(0, at - 1))
+
+const pageHeaderEase: array[9, int32] = [
+  65536, 60097, 55109, 50535, 46341, 42495, 38968, 35734, 32768,
+]
+
+func pageHeaderRemaining(time: int32): int32 {.inline.} =
+  let octaves = time * 1496
+  let whole = octaves shr 15
+  let eighth = (octaves shr 12) and 7
+  let fraction = octaves and 4095
+  (pageHeaderEase[eighth] -
+    (((pageHeaderEase[eighth] - pageHeaderEase[eighth + 1]) * fraction) shr 12)) shr whole
+
+func mixQ10(a, b, position: int32): int32 {.inline.} =
+  a + floorDivQ10((b - a) * position)
+
+func reset*(state: var PageHeader) {.inline.} =
+  state.initialized = 0
+
+func pageHeader*[Paths, Points, Nodes, Texts, Palette](
+    state: var PageHeader;
+    input: Input;
+    frame: var Frame[Paths, Points, Nodes, Texts, Palette];
+    titles: array[8, string];
+    values: array[8, HeaderText];
+    firstNode: static[int];
+    slots: PageHeaderSlots = DefaultPageHeaderSlots;
+) =
+  static:
+    doAssert Texts >= PageHeaderTexts
+    doAssert Nodes >= PageHeaderNodes
+    doAssert firstNode >= 0
+    doAssert firstNode + PageHeaderNodes <= Nodes
+    doAssert sizeof(PageHeader) == 20
+
+  var page = 0
+  for column in 0 ..< 4:
+    if slots[1][column] != slots[0][column] and
+        input.shown[column] == slots[1][column]:
+      page = 1
+
+  let target = if page == 1: int32(Unit) else: 0
+  const settle = 154'i32
+  if state.initialized == 0 or state.track != input.track or
+      input.reducedMotion != 0:
+    state.position = target
+    state.elapsed = settle
+  elif state.page != uint32(page):
+    state.elapsed = 0
+  elif state.elapsed < settle:
+    let delta = clampQ10(int32(input.elapsed), 0, settle)
+    state.elapsed += delta
+    if state.elapsed >= settle:
+      state.position = target
+    else:
+      state.position = target + floorDivQ10(
+        (state.position - target) * (pageHeaderRemaining(delta) shr 6))
+
+  state.initialized = 1
+  state.track = input.track
+  state.page = uint32(page)
+
+  let position = state.position
+  let bright = if position >= int32(Unit) div 2: 1 else: 0
+  for index in 0 ..< PageHeaderNodes:
+    place(frame, firstNode + index,
+      Q10(index * 60 * int32(Unit)), Q10(18 * position), Unit, 0, PaintKeep)
+
+  for row in 0 .. 1:
+    let titleY = mixQ10(
+      if row == 1: 33 * int32(Unit) else: 10 * int32(Unit),
+      if row == 1: 28 * int32(Unit) else: 13 * int32(Unit), position)
+    let valueY = mixQ10(
+      if row == 1: 33 * int32(Unit) else: 17818,
+      if row == 1: 36250 else: 13 * int32(Unit), position)
+    let size = mixQ10(
+      if row == 1: 666 else: int32(Unit),
+      if row == 1: int32(Unit) else: 666, position)
+    let titleSlot = if row == bright: 0 else: 8
+    let valueSlot = if row == bright: 4 else: 12
+    let scale = if row == bright: size else: floorDivQ10(size * 1575)
+    for column in 0 ..< 4:
+      let slot = int(slots[row][column])
+      var title: HeaderText
+      copyText(title, titles[slot])
+      for index in 0 ..< title.len:
+        if title[index] >= 'A' and title[index] <= 'Z':
+          title[index] = char(ord(title[index]) + ord('a') - ord('A'))
+      text(frame, titleSlot + column,
+        Q10((5 + 120 * column) * int32(Unit)), Q10(titleY), Unit, title)
+      text(frame, valueSlot + column,
+        Q10((65 + 120 * column) * int32(Unit)), Q10(valueY), Q10(scale), values[slot])
+
+  for column in 0 ..< 4:
+    header(frame, column, values[int(slots[page][column])])
 
 const sineQ10*: array[91, uint16] = [
   0, 18, 36, 54, 71, 89, 107, 125, 143, 160, 178, 195, 213, 230, 248,

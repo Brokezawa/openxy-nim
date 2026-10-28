@@ -16,7 +16,7 @@ If you copied this template into an existing project, install the dependency
 into that project instead:
 
 ```sh
-atlas use gh:Brokezwa/openxy
+atlas use https://github.com/Brokezawa/openxy-nim
 atlas install
 ```
 

@@ -65,3 +65,34 @@ block math:
   doAssert sine(1800) == 0
   doAssert rotation(0).cos == 1024
   doAssert rotation(0).sin == 0
+
+block page_header_layout:
+  doAssert sizeof(PageHeader) == 20
+  var state: PageHeader
+  state.reset()
+  var frame: Frame[2, 64, 10, 16, 16]
+  frame.paths[0].key = 1
+  frame.paths[1].key = 1
+  place(frame, 0, q10(0), q10(0), UnitQ10, 0, PaintKeep)
+  place(frame, 1, q10(0), q10(0), UnitQ10, 0, PaintKeep)
+  var titles: array[8, string] = ["One", "Two", "Three", "Four",
+    "Five", "Six", "Seven", "Eight"]
+  var values: array[8, HeaderText]
+  for index in 0 ..< values.len:
+    headerAmount(values[index], Q31(0x40000000))
+  pageHeader(state, Input(), frame, titles, values, 2)
+  doAssert frame.nodes[2].x == 0
+  doAssert frame.nodes[2].y == 0
+  doAssert frame.nodes[2].scale == int32(Unit)
+  doAssert frame.texts[0].chars[0] == 'o'
+  doAssert frame.texts[8].chars[0] == 'f'
+  doAssert frame.header[0][0] == '5'
+  doAssert valid(frame)
+
+block header_amount:
+  var text: HeaderText
+  headerAmount(text, Q31Max)
+  doAssert text[0] == '1' and text[1] == '0' and text[2] == '0'
+  doAssert text[3] == '\0'
+  headerAmount(text, Q31(-1))
+  doAssert text[0] == '0' and text[1] == '\0'
