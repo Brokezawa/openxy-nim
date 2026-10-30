@@ -70,6 +70,11 @@ environment variables.
    `src/<machineId>.nim`.
 5. Keep `openxyValidate(mkSynth, Voice, Shared)` at the end of the source.
 
+Machine sources use a `Control` enum for parameter slots, named phase/display
+constants, and no `cast`, `ptr`, or `addr`. Sample analysis uses `WordView`:
+the `prepareBegin` callback receives a borrowed view instead of a pointer and
+word count. See [the API](api.md#unsafe-code-boundary).
+
 Run the host tests and generate the machine:
 
 ```sh
@@ -161,7 +166,7 @@ Output: `build/out/<machineId>/sdkCompile/`.
 
 This builds the Blackfin module without a stock OS. It is the fast device check.
 The SDK prints the module memory. The current templates use about 76.1 KiB for
-the synth, 79.8 KiB for the two-page synth, and 138.7 KiB for the sample engine
+the synth, 79.9 KiB for the two-page synth, and 138.9 KiB for the sample engine
 of the 2032 KiB module region; these numbers can change as the machine grows.
 
 ## Firmware build

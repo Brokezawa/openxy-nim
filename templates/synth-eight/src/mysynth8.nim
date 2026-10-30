@@ -3,6 +3,9 @@
 import openxy
 
 type
+  Control* = enum
+    blend, width, level, motion, drive, crush, rectify, smooth
+
   Voice* = object
     phase: Phase
     filtered: int32
@@ -15,6 +18,53 @@ type
 
   Frame* = openxy.Frame[2, 64, 10, 16, 16]
 
+const
+  PulseCenter = 0x4000_0000'u32
+  PhaseMask = 0x7FFF_FFFF'u32
+  PhaseTopBit = 0x8000_0000'u32
+  Q15ToQ31 = 65536
+  HeaderFirstNode = 2
+  DisplayPhaseMask = 8191'u32
+  DisplayElapsedMax = 102
+
+  NodeX = 240
+  NodeOffset = 32
+  NodeY = 120
+  SpokeRadius = 40
+  InnerRadius = 24
+  PointsPerTurn = 64
+  TurnTenths = 3600
+  PathPhaseOffset = 900
+  PathKeyStride = 64
+
+func drive(sample, control: int32): int32 {.inline, raises: [].} =
+  const GainShift = 28
+  sample * (1 + (control shr GainShift))
+
+func clipQ15(sample: int32): int32 {.inline, raises: [].} =
+  const Limit = 16384
+  max(-Limit, min(sample, Limit))
+
+func crush(sample, control: int32): int32 {.inline, raises: [].} =
+  const ControlShift = 16
+  const Levels = 10
+  const Scale = 15
+  let bits = (control shr ControlShift) * Levels shr Scale
+  (sample shr bits) shl bits
+
+func rectify(sample, control: int32): int32 {.inline, raises: [].} =
+  const ControlShift = 16
+  const Scale = 15
+  let positive = if sample < 0: -sample else: sample
+  sample + (((positive - sample) * (control shr ControlShift)) shr Scale)
+
+func smooth(sample, control, previous: int32): int32 {.inline, raises: [].} =
+  const ControlShift = 16
+  const Steps = 31
+  const ControlScale = 5
+  const MixScale = 15
+  let amount = (control shr ControlShift) * Steps shr ControlScale
+  sample + (((previous - sample) * amount) shr MixScale)
 
 proc initialize*(voice: var Voice; shared: var Shared; owner: VoiceId) {.raises: [].} =
   voice.phase = Phase(0)
@@ -30,30 +80,23 @@ proc destroy*(voice: var Voice; shared: var Shared; owner: VoiceId) {.raises: []
 proc render*(voice: var Voice; shared: var Shared; owner: VoiceId;
              output: var openArray[Q31]; parameters: openArray[Q31];
              pitch: openArray[PhaseIncrement]) {.raises: [].} =
-  let blend = parameters[0]
-  let width = 0x40000000'u32 + uint32(toInt32(parameters[1]))
+  let blendAmount = parameters[blend]
+  let widthAmount = PulseCenter + toUint32(parameters[width])
   for index in 0 ..< output.len:
-    let phase = uint32(voice.phase)
-    var folded = phase and 0x7fffffff'u32
-    if (phase and 0x80000000'u32) != 0:
-      folded = 0x7fffffff'u32 - folded
-    let triangle = Q31(cast[int32](folded) - 0x40000000)
-    let pulse = if phase < width: Q31(0x40000000) else: Q31(-0x40000000)
-    let mixed = triangle * (Q31Max - blend) + pulse * blend
-    var sample = int32(mixed) shr 16
-    let gain = 1 + (int32(parameters[4]) shr 28)
-    sample = sample * gain
-    if sample < -16384:
-      sample = -16384
-    elif sample > 16384:
-      sample = 16384
-    let bits = (int32(parameters[5]) shr 16) * 10 shr 15
-    sample = (sample shr bits) shl bits
-    let positive = if sample < 0: -sample else: sample
-    sample = sample + (((positive - sample) * (int32(parameters[6]) shr 16)) shr 15)
-    let smoothing = (int32(parameters[7]) shr 16) * 31 shr 5
-    voice.filtered = sample + (((voice.filtered - sample) * smoothing) shr 15)
-    output[index] = Q31(voice.filtered * 65536) * parameters[2]
+    let raw = toUint32(voice.phase)
+    var folded = raw and PhaseMask
+    if (raw and PhaseTopBit) != 0:
+      folded = PhaseMask - folded
+    let triangle = Q31(int32(folded) - toInt32(Q31Half))
+    let pulse = if raw < widthAmount: Q31Half else: -Q31Half
+    let mixed = triangle * (Q31Max - blendAmount) + pulse * blendAmount
+    var sample = toInt32(mixed) shr 16
+    sample = drive(sample, toInt32(parameters[drive]))
+    sample = clipQ15(sample)
+    sample = crush(sample, toInt32(parameters[crush]))
+    sample = rectify(sample, toInt32(parameters[rectify]))
+    voice.filtered = smooth(sample, toInt32(parameters[smooth]), voice.filtered)
+    output[index] = Q31(voice.filtered * Q15ToQ31) * parameters[level]
     voice.phase += pitch[index]
 
 proc displayReset*(state: var DisplayState) {.raises: [].} =
@@ -61,33 +104,36 @@ proc displayReset*(state: var DisplayState) {.raises: [].} =
   state.header.reset()
 
 proc display*(state: var DisplayState; input: Input; frame: var Frame) {.raises: [].} =
-  const titles: array[8, string] = [
-    "Blend", "Width", "Level", "Motion", "Drive", "Crush", "Rectify", "Smooth",
+  const titles: array[Control, string] = [
+    "Blend", "Width", "Level", "Motion",
+    "Drive", "Crush", "Rectify", "Smooth",
   ]
-  var values: array[8, HeaderText]
-  for index in 0 ..< values.len:
-    headerAmount(values[index], input.slots[index])
-  const slots: PageHeaderSlots = [[0'u8, 1, 2, 3], [4'u8, 5, 6, 7]]
-  pageHeader(state.header, input, frame, titles, values, 2, slots)
+  var values: array[Control, HeaderText]
+  for control in Control:
+    headerAmount(values[control], input.slots[control])
+  pageHeader(state.header, input, frame, titles, values, HeaderFirstNode)
 
-  if input.heldNotes > 0 and input.heldNotes <= 128 and input.reducedMotion == 0:
-    state.phase = (state.phase + uint32(clampQ10(int32(input.elapsed), 0, 102))) and 8191'u32
-  let motion: int32 =
+  if input.heldNotes > 0 and input.heldNotes <= MaxHeldNotes and
+      input.reducedMotion == 0:
+    state.phase = (state.phase +
+      uint32(clampQ10(toInt32(input.elapsed), 0, DisplayElapsedMax))) and DisplayPhaseMask
+  let motionAmount: int32 =
     if input.reducedMotion != 0: 0
-    else: (int32(state.phase shr 7) - 32) * (int32(input.slots[3]) shr 26) div 32
+    else: (int32(state.phase shr 7) - 32) * (toInt32(input.slots[motion]) shr 26) div 32
 
   for path in 0 ..< 2:
-    frame.paths[path].key = state.phase div 8 + 1 + uint32(path * 64)
-    let radius: int32 = if path == 0: 40 else: 24
-    for point in 0 ..< 64:
-      let angle: int32 = int32(point) * 3600 div 64 + motion + int32(path * 900)
+    frame.paths[path].key = state.phase div 8 + 1 + uint32(path * PathKeyStride)
+    let radius: int32 = if path == 0: SpokeRadius else: InnerRadius
+    for point in 0 ..< PointsPerTurn:
+      let angle: int32 = int32(point) * TurnTenths div PointsPerTurn + motionAmount +
+        int32(path * PathPhaseOffset)
       let direction = rotation(angle)
       frame.paths[path].points[point] = Point(
-        x: direction.cos * radius div 1024,
-        y: direction.sin * radius div 1024,
+        x: direction.cos * radius div toInt32(UnitQ10),
+        y: direction.sin * radius div toInt32(UnitQ10),
       )
 
-  place(frame, 0, q10(208 + motion), q10(120), Unit, 15, PaintStroke)
-  place(frame, 1, q10(272 - motion), q10(120), Unit, 10, PaintStroke)
+  place(frame, 0, q10(NodeX - NodeOffset + motionAmount), q10(NodeY), Unit, 15, PaintStroke)
+  place(frame, 1, q10(NodeX + NodeOffset - motionAmount), q10(NodeY), Unit, 10, PaintStroke)
 
 openxyValidate(mkSynth, Voice, Shared)

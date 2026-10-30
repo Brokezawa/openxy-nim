@@ -23,11 +23,13 @@ If the template is copied into an existing project, use
 - `definition.json` owns the controls, presets, delay-buffer size and transport
   resource.
 - `src/myeffect.nim` implements `State`, `initialize`, and `process`.
-  `openxyValidate(mkEffect, State)` checks the callback shapes.
+  `openxyValidate(mkEffect, State)` checks the callback shapes. The source uses
+  a `Control` enum and `Buffer` accessors; it contains no `cast`, `ptr`, or
+  `addr`.
 
 The effect declares both optional inputs, so `process` receives a `Buffer` and
 a `Transport`. An absent buffer or transport is represented by an empty value;
-check `isEmpty` before using the pointer or timing fields.
+check `isEmpty` before using the buffer or timing fields.
 
 ## Build
 

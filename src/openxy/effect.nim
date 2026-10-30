@@ -13,8 +13,8 @@ const
 
 type
   Buffer* = object
-    words*: ptr UncheckedArray[Q31]
-    count*: uint32
+    wordData: ptr UncheckedArray[Q31]
+    count: uint32
 
   EffectBlock* = object
     left*: MutableAudioView[Q31]
@@ -23,17 +23,38 @@ type
     buffer*: Buffer
     transport*: Transport
 
+func initBuffer*(data: ptr UncheckedArray[Q31]; count: uint32): Buffer =
+  ## Borrow SDK-owned effect storage; an absent buffer is empty.
+  if data == nil or count == 0:
+    Buffer()
+  else:
+    Buffer(wordData: data, count: count)
+
+func initBuffer*(data: var openArray[Q31]): Buffer =
+  ## Borrow a caller-owned delay buffer for host tests.
+  if data.len == 0:
+    Buffer()
+  else:
+    Buffer(wordData: cast[ptr UncheckedArray[Q31]](addr data[0]),
+      count: uint32(data.len))
+
 func isEmpty*(buffer: Buffer): bool {.inline.} =
-  buffer.count == 0 or buffer.words == nil
+  buffer.count == 0 or buffer.wordData == nil
 
 func len*(buffer: Buffer): int {.inline.} = int(buffer.count)
 
-func `[]`*(buffer: Buffer; index: int): Q31 {.inline.} = buffer.words[index]
+func `[]`*(buffer: Buffer; index: int): Q31 {.inline.} =
+  if index < 0 or index >= int(buffer.count) or buffer.wordData == nil:
+    Q31(0)
+  else:
+    buffer.wordData[index]
+
 func `[]=`*(buffer: Buffer; index: int; value: Q31) {.inline.} =
-  buffer.words[index] = value
+  if index >= 0 and index < int(buffer.count) and buffer.wordData != nil:
+    buffer.wordData[index] = value
 
 template toOpenArray*(buffer: Buffer): untyped =
-  toOpenArray(buffer.words, 0, int(buffer.count) - 1)
+  toOpenArray(buffer.wordData, 0, int(buffer.count) - 1)
 
 func division*(control: Q31): uint32 {.inline.} =
   let value = int32(control)

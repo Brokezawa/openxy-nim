@@ -37,9 +37,10 @@ Template checks passed.
 The package "openxy" is valid.
 ```
 
-`nim checkTemplates` runs each template's host tests and generation. It also
-runs deliberate failure cases for a wrong definition ID and a wrong `Frame`
-size. Error logs from those cases are expected; the final line must be
+`nim checkTemplates` runs each template's host tests and generation, and the
+unsafe-token lint over `templates/*/src`. It also runs deliberate failure cases
+for a wrong definition ID, a wrong `Frame` size, and an unsafe source token.
+Error logs from those cases are expected; the final line must be
 `Template checks passed.`
 
 ## Full template checks
@@ -60,6 +61,7 @@ This also runs:
 - Synth browser preview ABI and drawing checks.
 - Synth Blackfin device compile.
 - Sample Blackfin device compile.
+- The synth-eight device compile and inline-stage review.
 
 The effect is not compiled standalone because the SDK rejects an effect-only
 collection. The four-machine collection check covers the effect and the
@@ -69,13 +71,16 @@ synth-eight template.
 
 `nim test` runs:
 
-- `t_q31` — Q31/SatQ31 arithmetic and boundaries.
-- `t_units` — unit sizes and conversions.
-- `t_draw` — display layout and helpers.
-- `t_sample_effect` — sample/effect mirrors.
+- `t_q31` — Q31/SatQ31 arithmetic, `Q31Half`, `toUint32`, `fromQ15`, and enum
+  parameter lookup.
+- `t_units` — unit sizes, 18-bit pad settings, and conversions.
+- `t_draw` — display layout, `MaxHeldNotes`, and the enum-indexed page header.
+- `t_sample_effect` — private sample/buffer views, `WordView`, the constructors,
+  and sample/effect mirrors.
 - `t_project` — machine ID and path rules.
 - `t_validate` — metadata validation.
-- `t_compile_failures` — invalid callback and unit-mixing cases.
+- `t_compile_failures` — invalid callbacks, unit mixing, and private-view field
+  mutation.
 - `t_abi` — C++ ABI and generated-header checks.
 - `t_raw` — raw generated bindings.
 - `t_page_header` — C++/Nim page-header parity.
@@ -173,8 +178,8 @@ The SDK prints a JSON memory report and a line like:
 
 ```text
 Memory 76.1 of 2032 KiB: sdk 65.0 KiB, mysynth 11.1 KiB
-Memory 79.8 of 2032 KiB: sdk 65.0 KiB, mysynth8 14.8 KiB
-Memory 138.7 of 2032 KiB: sdk 114.1 KiB, mysample 24.6 KiB
+Memory 79.9 of 2032 KiB: sdk 65.0 KiB, mysynth8 14.8 KiB
+Memory 138.9 of 2032 KiB: sdk 114.1 KiB, mysample 24.9 KiB
 ```
 
 Memory values can change; the important result is a successful link below the

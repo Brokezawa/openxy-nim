@@ -25,7 +25,9 @@ If the template is copied into an existing project, use
 - `definition.json` owns the eight controls, the page map, presets, and the
   display budget. `"press": "page"` switches all four encoder positions.
 - `src/mysynth8.nim` implements `Voice`, `Shared`, `DisplayState`,
-  `PageHeader`, and the callbacks.
+  `PageHeader`, and the callbacks. It uses a `Control` enum, named layout
+  constants, and private inline DSP stages; `HeaderFirstNode` is 2. The source
+  contains no `cast`, `ptr`, or `addr`.
 - `panel.svg.fragment` contains the shared header bars, 16 text slots, two path
   nodes, and palette.
 

@@ -38,6 +38,21 @@ func initMutableAudioView*[T](data: ptr UncheckedArray[T];
                               length: int): MutableAudioView[T] {.inline.} =
   MutableAudioView[T](data: data, length: length)
 
+func initAudioView*[T](data: openArray[T]): AudioView[T] {.inline.} =
+  ## Borrow a caller-owned array for the lifetime of the view.
+  if data.len == 0:
+    AudioView[T]()
+  else:
+    AudioView[T](data: cast[ptr UncheckedArray[T]](addr data[0]), length: data.len)
+
+func initMutableAudioView*[T](data: var openArray[T]): MutableAudioView[T] {.inline.} =
+  ## Borrow a caller-owned mutable array for the lifetime of the view.
+  if data.len == 0:
+    MutableAudioView[T]()
+  else:
+    MutableAudioView[T](data: cast[ptr UncheckedArray[T]](addr data[0]),
+      length: data.len)
+
 func len*[T](view: AudioView[T]): int {.inline.} = view.length
 func len*[T](view: MutableAudioView[T]): int {.inline.} = view.length
 func isEmpty*[T](view: AudioView[T]): bool {.inline.} = view.length == 0
@@ -48,6 +63,11 @@ func `[]`*[T](view: AudioView[T]; index: int): T {.inline.} = view.data[index]
 func `[]`*[T](view: MutableAudioView[T]; index: int): T {.inline.} = view.data[index]
 func `[]=`*[T](view: MutableAudioView[T]; index: int; value: T) {.inline.} =
   view.data[index] = value
+
+func `[]`*[T: enum](view: AudioView[Q31]; index: T): Q31 {.inline.} =
+  view.data[ord(index)]
+func `[]`*[T: enum](view: MutableAudioView[Q31]; index: T): Q31 {.inline.} =
+  view.data[ord(index)]
 
 template toOpenArray*[T](view: AudioView[T]): untyped =
   toOpenArray(view.data, 0, view.length - 1)

@@ -32,7 +32,8 @@ atlas install
   hand-edit the generated copy under `build/`.
 - `src/mysynth.nim` implements `Voice`, `Shared`, `DisplayState`, `Frame`, and
   the callback procs. `openxyValidate(mkSynth, Voice, Shared)` checks the
-  callback shapes.
+  callback shapes. The source uses a `Control` enum, named phase/display
+  constants, and no `cast`, `ptr`, or `addr`.
 - `panel.svg.fragment` is the artwork for the two display nodes and palette.
 
 The machine ID must be a lowercase letter followed by lowercase letters, digits,

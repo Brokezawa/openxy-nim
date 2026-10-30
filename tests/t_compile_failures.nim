@@ -23,6 +23,8 @@ block failures:
     "tests/fail/missing_destroy.nim",
     "tests/fail/raising_callback.nim",
     "tests/fail/page_header_small_frame.nim",
+    "tests/fail/private_view_fields.nim",
+    "tests/fail/wrong_analysis_callback.nim",
   ]:
     let (output, code) = check(path)
     doAssert code != 0, "expected compile failure: " & path & "\n" & output

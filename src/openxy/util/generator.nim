@@ -337,7 +337,7 @@ proc prepare_begin(job: var CPreparation; sample: CConstSampleView;
                    storage: ptr uint32; words: uint32): bool
     {.exportcpp: "prepare_begin", raises: [].} =
   mysynth.prepareBegin(cast[ptr Preparation](addr job)[],
-    cast[ptr SampleView](unsafeAddr sample)[], storage, words)
+    cast[ptr SampleView](unsafeAddr sample)[], initWordView(storage, words))
 
 proc prepare_step(job: var CPreparation; frames: uint32; cursor: var uint32): CPrepareStatus
     {.exportcpp: "prepare_step", raises: [].} =
@@ -385,7 +385,7 @@ proc process(state: var CState; buffer: CBuffer; transport: ConstTransport;
              left, right: CChannel; parameters: CParameters)
     {.exportcpp: "process", raises: [].} =
   mysynth.process(cast[ptr mysynth.State](addr state)[], makeBlock(left, right, parameters,
-    Buffer(words: buffer.words, count: buffer.count),
+    initBuffer(buffer.words, buffer.count),
     cast[ptr Transport](unsafeAddr transport)[]))
 """
   elif spec.hasBuffer:
@@ -393,7 +393,7 @@ proc process(state: var CState; buffer: CBuffer; transport: ConstTransport;
 proc process(state: var CState; buffer: CBuffer; left, right: CChannel;
              parameters: CParameters) {.exportcpp: "process", raises: [].} =
   mysynth.process(cast[ptr mysynth.State](addr state)[], makeBlock(left, right, parameters,
-    Buffer(words: buffer.words, count: buffer.count), Transport()))
+    initBuffer(buffer.words, buffer.count), Transport()))
 """
   elif spec.hasTransport:
     result.add """

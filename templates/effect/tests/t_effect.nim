@@ -12,18 +12,12 @@ block process_block:
     left[index] = Q31(0x10000000)
     right[index] = Q31(-0x08000000)
   var parameters = zeroParameters()
-  parameters[0] = Q31(0x40000000)
-  parameters[1] = Q31(0x7fffffff)
+  parameters[drive] = Q31Half
+  parameters[level] = Q31Max
   var buffer: array[16, Q31]
-  let effectBlock = EffectBlock(
-    left: initMutableAudioView(cast[ptr UncheckedArray[Q31]](addr left), left.len),
-    right: initMutableAudioView(cast[ptr UncheckedArray[Q31]](addr right), right.len),
-    parameters: initAudioView(cast[ptr UncheckedArray[Q31]](addr parameters),
-      parameters.len),
-    buffer: Buffer(words: cast[ptr UncheckedArray[Q31]](addr buffer),
-      count: uint32(buffer.len)),
-    transport: Transport(bpmX10: 1200, ticks96: 3, playing: true),
-  )
+  let effectBlock = initEffectBlock(left, right, parameters,
+    buffer = initBuffer(buffer),
+    transport = Transport(bpmX10: 1200, ticks96: 3, playing: true))
   process(state, effectBlock)
   doAssert left[0] != Q31(0), "the effect should produce audio"
   doAssert buffer[0] != Q31(0), "the effect should use its delay buffer"
@@ -36,14 +30,7 @@ block empty_optional_inputs:
   initialize(state)
   var left, right: array[BlockFrames, Q31]
   var parameters = zeroParameters()
-  let effectBlock = EffectBlock(
-    left: initMutableAudioView(cast[ptr UncheckedArray[Q31]](addr left), left.len),
-    right: initMutableAudioView(cast[ptr UncheckedArray[Q31]](addr right), right.len),
-    parameters: initAudioView(cast[ptr UncheckedArray[Q31]](addr parameters),
-      parameters.len),
-    buffer: Buffer(),
-    transport: Transport(),
-  )
+  let effectBlock = initEffectBlock(left, right, parameters)
   doAssert effectBlock.buffer.isEmpty
   doAssert effectBlock.transport.isEmpty
   process(state, effectBlock)

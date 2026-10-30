@@ -74,7 +74,9 @@ The generated headers use opaque `alignas` byte arrays for `Voice`, `Shared`,
 `State`, `DisplayState`, and `Preparation`, plus the concrete `Frame` alias.
 Nim `importcpp` aliases provide the SDK typedefs and const-reference parameters.
 The wrapper casts SDK-owned storage to the machine's plain Nim types and checks
-sizes/alignment before code generation.
+sizes/alignment before code generation. It constructs `WordView` and `Buffer`
+from the SDK pointers and counts, so machine code receives safe views rather
+than raw pointers.
 
 Saturating Q31 add/sub are pure Nim 32-bit arithmetic. Multiply and half use
 the SDK inline helpers through `importcpp`. No C++ `q31_ops` shim is generated.

@@ -47,3 +47,36 @@ template assertTransportEmpty*(transport: Transport) =
 
 func hasAnalysis*(sampleBlock: SampleBlock): bool {.inline.} =
   sampleBlock.analysis.isSome
+
+func initSampleBlock*(output: var openArray[Q31];
+                      parameters: openArray[Q31];
+                      pitch: openArray[PhaseIncrement];
+                      region: SampleRegion;
+                      settings = PadSettings(0);
+                      outputChannels = 1'u32;
+                      transport = Transport();
+                      analysis = none(ptr SampleAnalysis)): SampleBlock =
+  ## Borrow caller-owned test buffers for the lifetime of the block.
+  SampleBlock(
+    output: initMutableAudioView(output),
+    parameters: initAudioView(parameters),
+    pitch: initAudioView(pitch),
+    transport: transport,
+    region: region,
+    analysis: analysis,
+    settings: settings,
+    outputChannels: outputChannels,
+  )
+
+func initEffectBlock*(left, right: var openArray[Q31];
+                      parameters: openArray[Q31];
+                      buffer = Buffer();
+                      transport = Transport()): EffectBlock =
+  ## Borrow caller-owned test buffers for the lifetime of the block.
+  EffectBlock(
+    left: initMutableAudioView(left),
+    right: initMutableAudioView(right),
+    parameters: initAudioView(parameters),
+    buffer: buffer,
+    transport: transport,
+  )

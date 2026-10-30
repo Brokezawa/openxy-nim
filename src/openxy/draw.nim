@@ -21,6 +21,7 @@ const
   TextCapacity* = 24
   HeaderCapacity* = 8
   NotesUnavailable* = 0xffffffff'u32
+  MaxHeldNotes* = 128
   PageHeaderNodes* = 8
   PageHeaderTexts* = 16
   DefaultPageHeaderSlots* = [[0'u8, 1, 2, 3], [4'u8, 5, 6, 7]]
@@ -88,7 +89,7 @@ func reset*(tracker: var NoteTracker) {.inline.} =
 
 func update*(tracker: var NoteTracker; input: Input): NoteEvents =
   result = NoteEvents()
-  if input.heldNotes > 128:
+  if input.heldNotes > MaxHeldNotes:
     tracker.initialized = 0
     return
   if tracker.initialized != 0 and tracker.track == input.track:
@@ -224,11 +225,13 @@ func pageHeader*[Paths, Points, Nodes, Texts, Palette](
     state: var PageHeader;
     input: Input;
     frame: var Frame[Paths, Points, Nodes, Texts, Palette];
-    titles: array[8, string];
-    values: array[8, HeaderText];
+    titles: openArray[string];
+    values: openArray[HeaderText];
     firstNode: static[int];
     slots: PageHeaderSlots = DefaultPageHeaderSlots;
 ) =
+  if titles.len != PageHeaderNodes or values.len != PageHeaderNodes:
+    return
   static:
     doAssert Texts >= PageHeaderTexts
     doAssert Nodes >= PageHeaderNodes

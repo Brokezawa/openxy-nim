@@ -18,11 +18,26 @@ type
 const
   Q31Min* = Q31(low(int32))
   Q31Max* = Q31(high(int32))
+  Q31Half* = Q31(0x4000_0000)
   SatQ31Min* = SatQ31(low(int32))
   SatQ31Max* = SatQ31(high(int32))
 
 func toInt32*(value: Q31): int32 {.inline.} = int32(value)
 func toInt32*(value: SatQ31): int32 {.inline.} = int32(value)
+
+func toUint32*(value: Q31): uint32 {.inline.} = uint32(int32(value))
+
+func fromQ15*(value: int16): Q31 {.inline.} =
+  ## Convert a Q1.15 sample to Q1.31.
+  Q31(int32(value) * 0x8000)
+
+func `[]`*[T: enum](values: openArray[Q31]; index: T): Q31 {.inline.} =
+  ## Index a parameter or header array by a machine control enum.
+  values[ord(index)]
+
+func `[]`*[T: enum](values: var openArray[Q31]; index: T): var Q31 {.inline.} =
+  ## Mutable enum lookup for host-test parameter arrays.
+  values[ord(index)]
 
 func toQ31*(value: SatQ31): Q31 {.inline.} = Q31(int32(value))
 

@@ -3,6 +3,9 @@
 import openxy
 
 type
+  Control* = enum
+    blend, width, level, motion
+
   Voice* = object
     phase: Phase
 
@@ -13,6 +16,22 @@ type
     notes: NoteTracker
 
   Frame* = openxy.Frame[2, 64, 2, 0, 16]
+
+const
+  PulseCenter = 0x4000_0000'u32
+  PhaseMask = 0x7FFF_FFFF'u32
+  PhaseTopBit = 0x8000_0000'u32
+  ShadeMask = 7
+
+  CenterX = 320
+  CenterY = 160
+  OrbitX = 72
+  SpokeRadius = 40
+  InnerRadius = 24
+  PointsPerTurn = 64
+  TurnTenths = 3600
+  PathPhaseOffset = 900
+  PathKeyStride = 64
 
 
 proc initialize*(voice: var Voice; shared: var Shared; owner: VoiceId) {.raises: [].} =
@@ -27,17 +46,17 @@ proc destroy*(voice: var Voice; shared: var Shared; owner: VoiceId) {.raises: []
 proc render*(voice: var Voice; shared: var Shared; owner: VoiceId;
              output: var openArray[Q31]; parameters: openArray[Q31];
              pitch: openArray[PhaseIncrement]) {.raises: [].} =
-  let blend = parameters[0]
-  let width = 0x40000000'u32 + uint32(toInt32(parameters[1]))
+  let blendAmount = parameters[blend]
+  let widthAmount = PulseCenter + toUint32(parameters[width])
   for index in 0 ..< output.len:
-    let phase = uint32(voice.phase)
-    var folded = phase and 0x7fffffff'u32
-    if (phase and 0x80000000'u32) != 0:
-      folded = 0x7fffffff'u32 - folded
-    let triangle = Q31(cast[int32](folded) - 0x40000000)
-    let pulse = if phase < width: Q31(0x40000000) else: Q31(-0x40000000)
-    let mixed = triangle * (Q31Max - blend) + pulse * blend
-    output[index] = mixed * parameters[2]
+    let raw = toUint32(voice.phase)
+    var folded = raw and PhaseMask
+    if (raw and PhaseTopBit) != 0:
+      folded = PhaseMask - folded
+    let triangle = Q31(int32(folded) - toInt32(Q31Half))
+    let pulse = if raw < widthAmount: Q31Half else: -Q31Half
+    let mixed = triangle * (Q31Max - blendAmount) + pulse * blendAmount
+    output[index] = mixed * parameters[level]
     voice.phase += pitch[index]
 
 proc displayReset*(state: var DisplayState) {.raises: [].} =
@@ -49,27 +68,29 @@ proc display*(state: var DisplayState; input: Input; frame: var Frame) {.raises:
   if events.holdStarted or events.noteReleased:
     state.phase = 0
   inc state.phase
-  let motion = int32(toInt32(input.parameters[3]) shr 20)
-  let spin = int32(state.phase mod 360) * 10 + motion
-  let left = q10(320) - q10(72)
-  let right = q10(320) + q10(72)
-  let middle = q10(160)
+  let motionAmount = int32(toInt32(input.parameters[motion]) shr 20)
+  let spin = int32(state.phase mod 360) * 10 + motionAmount
+  let left = q10(CenterX - OrbitX)
+  let right = q10(CenterX + OrbitX)
+  let middle = q10(CenterY)
 
-  place(frame, 0, left, middle, UnitQ10, uint32(motion and 7), PaintStroke)
-  place(frame, 1, right, middle, UnitQ10, uint32((motion + 3) and 7), PaintFillAndStroke)
+  place(frame, 0, left, middle, UnitQ10, uint32(motionAmount and ShadeMask), PaintStroke)
+  place(frame, 1, right, middle, UnitQ10,
+    uint32((motionAmount + 3) and ShadeMask), PaintFillAndStroke)
   turn(frame, 0, rotation(spin))
   turn(frame, 1, rotation(-spin))
   header(frame, 0, "NIM")
 
   for path in 0 .. 1:
-    frame.paths[path].key = state.phase div 8'u32 + 1'u32 + uint32(path * 64)
-    let radius: int32 = if path == 0: 40 else: 24
-    for point in 0 ..< 64:
-      let angle = int32(point) * 3600 div 64 + spin + int32(path * 900)
+    frame.paths[path].key = state.phase div 8'u32 + 1'u32 + uint32(path * PathKeyStride)
+    let radius: int32 = if path == 0: SpokeRadius else: InnerRadius
+    for point in 0 ..< PointsPerTurn:
+      let angle = int32(point) * TurnTenths div PointsPerTurn + spin +
+        int32(path * PathPhaseOffset)
       let direction = rotation(angle)
       frame.paths[path].points[point] = Point(
-        x: direction.cos * radius div 1024,
-        y: direction.sin * radius div 1024,
+        x: direction.cos * radius div toInt32(UnitQ10),
+        y: direction.sin * radius div toInt32(UnitQ10),
       )
 
 openxyValidate(mkSynth, Voice, Shared)

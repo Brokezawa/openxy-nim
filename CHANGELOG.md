@@ -14,6 +14,10 @@ All notable changes to openxy are recorded here.
 - Browser preview for synths.
 - Blackfin device compile and four-machine collection build.
 - Pinned OP-XY SDK tag `v0.0.3` (`17840e3`), firmware 1.2.1, and SDK API 1.6.
+- Safe view API: `WordView`, private storage on `SampleView`/`Buffer`/
+  `SampleAnalysis`, read-only accessors, and testkit constructors.
+- `Q31Half`, `toUint32(Q31)`, `fromQ15`, `MaxHeldNotes`, and enum-indexed
+  parameter lookup.
 - SDK 1.6 18-bit pad settings, layout-provided machine numbers, sample engine
   bases, page headers, page switching, machine presets, 16 text slots, and
   effect alternates.
@@ -24,7 +28,11 @@ All notable changes to openxy are recorded here.
 
 ### Changed
 
-- None.
+- Templates use named control enums, named domain constants, and no
+  `cast`/`ptr`/`addr`; the synth-eight DSP stages are private inline functions.
+- `prepareBegin` receives a `WordView`; host tests build views through the
+  public/testkit constructors.
+- `nim checkTemplates` rejects unsafe tokens in template sources.
 
 ### Limits
 

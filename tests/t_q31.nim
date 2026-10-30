@@ -42,3 +42,25 @@ block boundary_subtraction:
   doAssert saturatingSub(low(int32), 0'i32) == low(int32)
   doAssert saturatingAdd(high(int32), 0'i32) == high(int32)
   doAssert saturatingAdd(low(int32), -1'i32) == low(int32)
+
+block half_and_bits:
+  doAssert Q31Half == Q31(0x4000_0000)
+  doAssert toInt32(Q31Half) == 0x4000_0000
+  doAssert toUint32(Q31(-1)) == 0xFFFF_FFFF'u32
+  doAssert toUint32(Q31Min) == 0x8000_0000'u32
+  doAssert toUint32(Q31Max) == 0x7FFF_FFFF'u32
+
+block q15_conversion:
+  doAssert fromQ15(32767) == Q31(0x3FFF_8000)
+  doAssert fromQ15(-32768) == Q31(-0x4000_0000)
+  doAssert fromQ15(0) == Q31(0)
+
+block enum_lookup:
+  type Control = enum blend, width, level
+  let values = [Q31(1), Q31(2), Q31(3)]
+  doAssert values[blend] == Q31(1)
+  doAssert values[width] == Q31(2)
+  doAssert values[level] == Q31(3)
+  type TooMany = enum a, b, c, d
+  doAssertRaises(IndexDefect):
+    discard values[d]

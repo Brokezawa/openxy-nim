@@ -6,8 +6,10 @@
 import openxy
 
 type
+  Control* = enum
+    drive, level, dry
+
   State* = object
-    level: Q31
     phase*: uint32
 
 
@@ -16,23 +18,23 @@ proc initialize*(state: var State) {.raises: [].} =
 
 
 proc process*(state: var State; effectBlock: EffectBlock) {.raises: [].} =
-  let drive = effectBlock.parameters[0]
-  let level = effectBlock.parameters[1]
+  let driveAmount = effectBlock.parameters[drive]
+  let levelAmount = effectBlock.parameters[level]
+  let hasBuffer = not effectBlock.buffer.isEmpty
+  let bufferLength = effectBlock.buffer.len
   var feedback = Q31(0)
-  if effectBlock.buffer.len > 0:
+  if hasBuffer:
     feedback = effectBlock.buffer[0]
   let moving = effectBlock.transport.isEmpty or effectBlock.transport.playing
   for index in 0 ..< effectBlock.left.len:
     let dry = effectBlock.left[index]
-    let wet = dry * drive + feedback
-    effectBlock.left[index] = wet * level
-    effectBlock.right[index] = (effectBlock.right[index] * drive + feedback) * level
-    if effectBlock.buffer.len > 0:
-      effectBlock.buffer[index mod effectBlock.buffer.len] = wet
+    let wet = dry * driveAmount + feedback
+    effectBlock.left[index] = wet * levelAmount
+    effectBlock.right[index] = (effectBlock.right[index] * driveAmount + feedback) * levelAmount
+    if hasBuffer:
+      effectBlock.buffer[index mod bufferLength] = wet
     if moving:
       inc state.phase, effectBlock.transport.ticks96
-  if effectBlock.buffer.len > 0:
-    state.level = effectBlock.buffer[0]
 
 
 openxyValidate(mkEffect, State)

@@ -37,6 +37,12 @@ block note_tracker:
   tracker.reset()
   doAssert tracker.update(Input(track: 8, heldNotes: 2)).holdStarted == false
 
+block held_note_limit:
+  var tracker = NoteTracker()
+  doAssert MaxHeldNotes == 128
+  discard tracker.update(Input(track: 1, heldNotes: MaxHeldNotes + 1))
+  doAssert tracker.initialized == 0
+
 block frame_helpers:
   var frame: Frame[2, 64, 2, 0, 16]
   frame.paths[0].key = 1
@@ -75,11 +81,12 @@ block page_header_layout:
   frame.paths[1].key = 1
   place(frame, 0, q10(0), q10(0), UnitQ10, 0, PaintKeep)
   place(frame, 1, q10(0), q10(0), UnitQ10, 0, PaintKeep)
-  var titles: array[8, string] = ["One", "Two", "Three", "Four",
+  type HeaderControl = enum one, two, three, four, five, six, seven, eight
+  var titles: array[HeaderControl, string] = ["One", "Two", "Three", "Four",
     "Five", "Six", "Seven", "Eight"]
-  var values: array[8, HeaderText]
-  for index in 0 ..< values.len:
-    headerAmount(values[index], Q31(0x40000000))
+  var values: array[HeaderControl, HeaderText]
+  for control in HeaderControl:
+    headerAmount(values[control], Q31(0x40000000))
   pageHeader(state, Input(), frame, titles, values, 2)
   doAssert frame.nodes[2].x == 0
   doAssert frame.nodes[2].y == 0

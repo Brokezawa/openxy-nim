@@ -30,6 +30,40 @@ for argument in commandLineParams():
   if argument == "--full":
     fullCheck = true
 
+proc stripComment(line: string): string =
+  let comment = line.find('#')
+  if comment >= 0: line[0 ..< comment] else: line
+
+proc hasToken(line, token: string): bool =
+  var start = 0
+  while true:
+    let position = line.find(token, start)
+    if position < 0:
+      return false
+    let before = if position == 0: '\0' else: line[position - 1]
+    let after = if position + token.len >= line.len: '\0' else: line[position + token.len]
+    if before notin {'A'..'Z', 'a'..'z', '0'..'9', '_'} and
+        after notin {'A'..'Z', 'a'..'z', '0'..'9', '_'}:
+      return true
+    start = position + token.len
+  false
+
+proc scanSource(path: string) =
+  let lines = readFile(path).splitLines
+  for index, line in lines:
+    let code = stripComment(line)
+    for token in ["cast", "ptr", "addr", "unsafeAddr", "UncheckedArray"]:
+      if code.hasToken(token):
+        raise newException(ValueError,
+          path & ":" & $(index + 1) & " uses unsafe token " & token)
+
+proc checkTemplateSources() =
+  for folder in ["synth", "synth-eight", "sample", "effect"]:
+    let source = templatesRoot / folder / "src"
+    for path in walkDirRec(source):
+      if path.endsWith(".nim"):
+        scanSource(path)
+
 proc run(command: string) =
   echo "Running: ", command
   exec command
@@ -85,6 +119,19 @@ proc exercise(item: TemplateCase; project: string) =
 if dirExists(scratch):
   removeDirCompat(scratch)
 ensureDir(scratch)
+
+checkTemplateSources()
+
+# The lint must reject an unsafe source token.
+let unsafeFixture = scratch / "unsafe_fixture.nim"
+writeFile(unsafeFixture, "let value = cast[int32](1)\n")
+var unsafeRejected = false
+try:
+  scanSource(unsafeFixture)
+except ValueError:
+  unsafeRejected = true
+if not unsafeRejected:
+  raise newException(ValueError, "the unsafe-token lint accepted a cast")
 
 for item in cases:
   let project = prepare(item)

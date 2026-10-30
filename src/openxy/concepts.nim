@@ -30,26 +30,6 @@ type
     initialize(state)
     process(state, EffectBlock)
 
-template openxyValidate*(kind: static[MachineKind]; voice: typedesc;
-                         shared: typedesc) =
-  ## Validate a synth at the line where the machine declares its contract.
-  when kind != mkSynth:
-    {.error: "openxyValidate with Voice and Shared is for synth machines".}
-  else:
-    static:
-      doAssert compiles(block:
-        let initializeCb: proc (value: var voice; state: var shared;
-                                owner: VoiceId) {.raises: [].} = initialize
-        let startCb: proc (value: var voice; state: var shared;
-                           owner: VoiceId) {.raises: [].} = start
-        let destroyCb: proc (value: var voice; state: var shared;
-                             owner: VoiceId) {.raises: [].} = destroy
-        let renderCb: proc (value: var voice; state: var shared;
-                            owner: VoiceId; output: var openArray[Q31];
-                            parameters: openArray[Q31];
-                            pitch: openArray[PhaseIncrement]) {.raises: [].} = render
-      ), "synth callbacks must have the exact SDK signature and must not raise"
-
 template openxyValidate*(kind: static[MachineKind]; voice: typedesc) =
   ## Validate a sample engine or effect at the machine source.
   when kind == mkSample:
@@ -70,3 +50,40 @@ template openxyValidate*(kind: static[MachineKind]; voice: typedesc) =
       ), "effect callbacks must have the exact SDK signature and must not raise"
   else:
     {.error: "openxyValidate with one type is for sample or effect machines".}
+
+template openxyValidate*(kind: static[MachineKind]; voice, extra: typedesc) =
+  ## Validate a synth's Shared type or a sample engine's analysis callbacks.
+  when kind == mkSynth:
+    static:
+      doAssert compiles(block:
+        let initializeCb: proc (value: var voice; state: var extra;
+                                owner: VoiceId) {.raises: [].} = initialize
+        let startCb: proc (value: var voice; state: var extra;
+                           owner: VoiceId) {.raises: [].} = start
+        let destroyCb: proc (value: var voice; state: var extra;
+                             owner: VoiceId) {.raises: [].} = destroy
+        let renderCb: proc (value: var voice; state: var extra;
+                            owner: VoiceId; output: var openArray[Q31];
+                            parameters: openArray[Q31];
+                            pitch: openArray[PhaseIncrement]) {.raises: [].} = render
+      ), "synth callbacks must have the exact SDK signature and must not raise"
+  elif kind == mkSample:
+    static:
+      doAssert compiles(block:
+        let initializeCb: proc (value: var voice; sample: SampleView)
+          {.raises: [].} = initialize
+        let startCb: proc (value: var voice) {.raises: [].} = start
+        let renderCb: proc (value: var voice; sampleBlock: SampleBlock)
+          {.raises: [].} = renderSample
+        let analysisWordsCb: proc (sample: SampleView): uint32
+          {.raises: [].} = analysisWords
+        let prepareBeginCb: proc (job: var extra; sample: SampleView;
+                                  storage: WordView): bool {.raises: [].} = prepareBegin
+        let prepareStepCb: proc (job: var extra; frames: uint32;
+                                 cursor: var uint32): PrepareStatus
+          {.raises: [].} = prepareStep
+        let preparedCb: proc (job: extra; analysis: var SampleAnalysis): bool
+          {.raises: [].} = prepared
+      ), "sample analysis callbacks must have the exact SDK signature and must not raise"
+  else:
+    {.error: "openxyValidate with three types is for synths or sample analysis".}

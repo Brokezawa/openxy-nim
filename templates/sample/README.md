@@ -22,7 +22,9 @@ If the template is copied into an existing project, use
   a `sampler` base plays chromatically without those services.
 - `definition.json` owns the controls, presets, and sample resources.
 - `src/mysample.nim` implements `Voice`, `Preparation`, and the sample
-  callbacks. `openxyValidate(mkSample, Voice)` checks the required callbacks.
+  callbacks. `openxyValidate(mkSample, Voice, Preparation)` checks the required
+  callbacks. The source uses a `Control` enum, typed `PadSettings` operations,
+  `Q31Half`, `fromQ15`, and `WordView`; it contains no `cast`, `ptr`, or `addr`.
 
 The sample engine implements every optional service: pad defaults and
 assignment, drum controls and panel, and sample analysis. Remove a service from
@@ -58,7 +60,7 @@ proc drumPanel*(value: PadSettings; saved: SampleRegion;
                 parameters: openArray[Q31]; panel: var DrumPanel) {.raises: [].}
 proc analysisWords*(sample: SampleView): uint32 {.raises: [].}
 proc prepareBegin*(job: var Preparation; sample: SampleView;
-                   storage: ptr uint32; words: uint32): bool {.raises: [].}
+                   storage: WordView): bool {.raises: [].}
 proc prepareStep*(job: var Preparation; frames: uint32;
                   cursor: var uint32): PrepareStatus {.raises: [].}
 proc prepared*(job: Preparation; analysis: var SampleAnalysis): bool {.raises: [].}

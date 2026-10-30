@@ -99,7 +99,7 @@ content, stock OS files, or device identifiers in the repository.
 
 The workflow is `.github/workflows/ci.yml`. It runs:
 
-- Linux fast checks;
+- Linux fast checks, including the unsafe-token template lint;
 - macOS full preview and device checks on Apple Silicon;
 - Atlas local-link smoke checks.
 
