@@ -17,10 +17,10 @@ If the template is copied into an existing project, use
 
 - `config.nims` owns `machineId`, `machineSource`, `buildRoot`, `stockOs`,
   `layout`, and the task names.
-- `machine.json` declares the SDK version, sample kind, identity, and amp
-  defaults.
-- `definition.json` owns the controls, presets, and sample resources. The stock
-  sample page is page 7 when pad settings or drum controls are enabled.
+- `machine.json` declares SDK 1.6, the sample kind, the `drumSampler` base, and
+  amp defaults. Pad settings and drum controls require the drum sampler base;
+  a `sampler` base plays chromatically without those services.
+- `definition.json` owns the controls, presets, and sample resources.
 - `src/mysample.nim` implements `Voice`, `Preparation`, and the sample
   callbacks. `openxyValidate(mkSample, Voice)` checks the required callbacks.
 

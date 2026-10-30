@@ -16,7 +16,7 @@ Expected:
 - Nim 2.2.12 or newer.
 - Every `nim doctor` line starts with `ok:`.
 - The `open-xy` submodule line reports the commit recorded in `open-xy.lock`
-  (tag `v0.0.2`, SDK API 1.4, firmware 1.2.1).
+  (tag `v0.0.3`, SDK API 1.6, firmware 1.2.1).
 
 `nim doctor` checks the SDK checkout, Python, wasm-capable Clang, the Blackfin
 toolchain, and Node. A failure prints the command that fixes it.
@@ -172,15 +172,15 @@ nim compile --skipParentCfg:on
 The SDK prints a JSON memory report and a line like:
 
 ```text
-Memory 29.7 of 2040 KiB: sdk 21.0 KiB, mysynth 8.7 KiB
-Memory 33.4 of 2040 KiB: sdk 21.1 KiB, mysynth8 12.3 KiB
-Memory 93.7 of 2040 KiB: sdk 69.1 KiB, mysample 24.6 KiB
+Memory 76.1 of 2032 KiB: sdk 65.0 KiB, mysynth 11.1 KiB
+Memory 79.8 of 2032 KiB: sdk 65.0 KiB, mysynth8 14.8 KiB
+Memory 138.7 of 2032 KiB: sdk 114.1 KiB, mysample 24.6 KiB
 ```
 
 Memory values can change; the important result is a successful link below the
 shared reservation.
 
-## Three-machine collection
+## Four-machine collection
 
 The current workspace can compile all four generated machines:
 

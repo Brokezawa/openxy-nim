@@ -15,7 +15,7 @@ The 0.1.0 release is a **source-only experimental developer preview**:
 - No Nimble package.
 
 The release is published as an annotated Git tag and a GitHub Release. It
-targets SDK tag `v0.0.2` at `c10d61b`, firmware `1.2.1`, and SDK API `1.4`. The
+targets SDK tag `v0.0.3` at `17840e3`, firmware `1.2.1`, and SDK API `1.6`. The
 release notes must say that the project is experimental and does not guarantee
 device recovery.
 
@@ -65,7 +65,7 @@ git ls-files -s open-xy
 ```
 
 `git submodule status` must report
-`c10d61b529521eff48dfcc619cb0d793e602e2eb`, and `git ls-files -s open-xy` must
+`17840e39a0e427be827cd1c8cbc62d8015205bcd`, and `git ls-files -s open-xy` must
 start with `160000`. A plain jj commit is not sufficient for CI, because GitHub
 Actions cannot initialize the SDK without the gitlink.
 
@@ -124,7 +124,7 @@ openxy 0.1.0 — experimental developer preview
 Release notes must include:
 
 - the tested configuration and date;
-- SDK tag `v0.0.2` and API 1.4;
+- SDK tag `v0.0.3` and API 1.6;
 - the stock OS 1.2.1 version;
 - the package hash or a link to the hardware record;
 - “Still experimental; no recovery guarantee.”;

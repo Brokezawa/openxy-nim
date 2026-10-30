@@ -5,6 +5,7 @@ import openxy/private/raw/opxy
 block raw_surface:
   var view: SampleView
   doAssert sample_at(view, 0, 0) == 0
+  doAssert sizeof(PadSettings) == 4
   var frame: Frame
   frame.nodes[0].x = 4
   frame.header[0][0] = 'A'

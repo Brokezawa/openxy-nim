@@ -21,7 +21,7 @@ follow after the native path is stable.
 
 Tested environment for 0.1.0: Nim 2.2.12, Python 3.12.13, Node 26.12.1, LLVM
 23.1.4, Atlas 0.16.3, and SDK commit
-`c10d61b529521eff48dfcc619cb0d793e602e2eb` (SDK API 1.4). CI uses these exact versions for
+`17840e39a0e427be827cd1c8cbc62d8015205bcd` (SDK API 1.6). CI uses these exact versions for
 Nim, Python, Node, and NumPy, and records the resolved Homebrew LLVM and Atlas
 versions in its logs. This is a best-effort setup, not a hermetic build
 environment.
@@ -49,8 +49,8 @@ open-xy.lock         SDK commit checked by `nim doctor`
 
 ## SDK pin
 
-`open-xy.lock` records the SDK tag `v0.0.2` at commit `c10d61b`, targeting
-firmware 1.2.1 and SDK API 1.4. Initialize the SDK once after cloning an openxy
+`open-xy.lock` records the SDK tag `v0.0.3` at commit `17840e3`, targeting
+firmware 1.2.1 and SDK API 1.6. Initialize the SDK once after cloning an openxy
 project:
 
 ```sh
@@ -132,10 +132,10 @@ To build several machines together, use the SDK's collection support directly:
 
 ```sh
 python3 open-xy/sdk.py build \
-  --machine build/synth/mysynth \
-  --machine build/synth-eight/mysynth8 \
-  --machine build/sample/mysample \
-  --machine build/effect/myeffect \
+  --machine templates/synth/build/synth/mysynth \
+  --machine templates/synth-eight/build/synth/mysynth8 \
+  --machine templates/sample/build/sample/mysample \
+  --machine templates/effect/build/effect/myeffect \
   --stock-os stock-1.2.1/os.ldr \
   --out builds/collection-001
 ```
@@ -170,7 +170,7 @@ Nim's conditional-compilation boilerplate.
 
 ## Status
 
-The synth, sample, and effect paths are implemented for SDK API 1.4 and
+The synth, sample, and effect paths are implemented for SDK API 1.6 and
 firmware 1.2.1: typed API, validation, measurement, generator, four templates
 including the two-page synth, host tests, sample/effect service coverage,
 browser preview for synths, Blackfin development compiles, and a four-machine

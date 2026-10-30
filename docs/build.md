@@ -1,6 +1,6 @@
 # Build and generation
 
-The current SDK pin is tag `v0.0.2` at `c10d61b`, with SDK API 1.4 and
+The current SDK pin is tag `v0.0.3` at commit `17840e3`, with SDK API 1.6 and
 firmware 1.2.1. The profile and stock OS names are part of the generated build.
 
 ## Template ownership

@@ -304,25 +304,25 @@ proc render_sample(voice: var CVoice; sampleBlock: CConstSampleBlock)
 """
   if spec.hasPadSettings:
     result.add """
-proc sample_defaults(): uint16 {.exportcpp: "sample_defaults", raises: [].} =
-  uint16(mysynth.sampleDefaults())
+proc sample_defaults(): uint32 {.exportcpp: "sample_defaults", raises: [].} =
+  uint32(mysynth.sampleDefaults())
 
-proc sample_assign(assignment: CConstSampleAssignment): uint16
+proc sample_assign(assignment: CConstSampleAssignment): uint32
     {.exportcpp: "sample_assign", raises: [].} =
-  uint16(mysynth.sampleAssign(
+  uint32(mysynth.sampleAssign(
     cast[ptr SampleAssignment](unsafeAddr assignment)[]))
 """
   if spec.hasDrumControls:
     result.add """
-proc drum_control(value: var uint16; event: CConstDrumControl)
+proc drum_control(value: var uint32; event: CConstDrumControl)
     {.exportcpp: "drum_control", raises: [].} =
-  var settings = PadSettings(value)
+  var settings = toPadSettings(value)
   mysynth.drumControl(settings, cast[ptr DrumControl](unsafeAddr event)[])
-  value = uint16(settings)
+  value = toUint32(settings)
 
-proc drum_panel(value: uint16; saved: CConstSampleRegion; parameters: CParameters;
+proc drum_panel(value: uint32; saved: CConstSampleRegion; parameters: CParameters;
                 panel: var CDrumPanel) {.exportcpp: "drum_panel", raises: [].} =
-  mysynth.drumPanel(PadSettings(value),
+  mysynth.drumPanel(toPadSettings(value),
     cast[ptr SampleRegion](unsafeAddr saved)[],
     toOpenArray(cast[ptr UncheckedArray[Q31]](parameters), 0, openxy.ParameterSlots - 1),
     cast[ptr DrumPanel](addr panel)[])

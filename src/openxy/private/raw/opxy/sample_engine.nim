@@ -1,7 +1,7 @@
 import openxy/private/raw/opxy/[sample_analysis, transport]
 
 type
-  PadSettings* = uint16
+  PadSettings* = uint32
 
   SampleRegion* {.importcpp: "opxy::SampleRegion",
     header: "opxy/sample_engine.hpp".} = object

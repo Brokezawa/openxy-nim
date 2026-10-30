@@ -5,9 +5,10 @@ import openxy
 block layouts:
   when sizeof(pointer) == 8:
     doAssert sizeof(SampleView) == 24
-    doAssert sizeof(SampleAssignment) == 32
+    doAssert sizeof(SampleAssignment) == 40
     doAssert sizeof(SampleAnalysis) == 40
     doAssert sizeof(Buffer) == 16
+  doAssert sizeof(PadSettings) == 4
   doAssert sizeof(SampleRegion) == 20
   doAssert sizeof(DrumControl) == 12
   doAssert sizeof(DrumPanel) == 44

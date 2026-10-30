@@ -12,7 +12,8 @@ block layouts:
   doAssert sizeof(Semitones) == 4
   doAssert sizeof(SampleFrame) == 4
   doAssert sizeof(VoiceId) == 4
-  doAssert sizeof(PadSettings) == 2
+  doAssert sizeof(PadSettings) == 4
+  doAssert alignof(PadSettings) == 4
   doAssert sizeof(Paint) == 4
 
 block phase_wraps:
@@ -30,7 +31,9 @@ block pad_settings:
   let value = PadSettings(0b1010) xor PadSettings(0b0011)
   doAssert value == PadSettings(0b1001)
   doAssert (value and PadSettings(0b1000)) == PadSettings(0b1000)
-  doAssert (not PadSettings(0)) == PadSettings(0xffff)
+  doAssert (not PadSettings(0)) == PadSettings(0x3_ffff)
+  doAssert toUint32(PadSettings(0x2_abcd)) == 0x2_abcd
+  doAssert toPadSettings(0x7_ffff) == PadSettings(0x3_ffff)
 
 block voice_ids:
   doAssert not isValid(VoiceId(0))

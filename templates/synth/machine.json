@@ -1,12 +1,8 @@
 {
   "schema": 1,
-  "sdk": "1.4",
+  "sdk": "1.6",
   "kind": "synth",
   "description": "A small Nim triangle/pulse synth with a two-node animated display.",
-  "identity": {
-    "engine": 46,
-    "page": 93
-  },
   "presetDefaults": {
     "amp": {
       "attack": 120,

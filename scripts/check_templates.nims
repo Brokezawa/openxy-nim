@@ -57,6 +57,14 @@ proc exercise(item: TemplateCase; project: string) =
   for relative in item.generated:
     if not fileExists(generated / relative):
       raise newException(IOError, "template did not generate " & item.folder & "/" & relative)
+  let machineJson = readFile(generated / "machine.json")
+  if not machineJson.contains("\"sdk\": \"1.6\""):
+    raise newException(ValueError, item.folder & " did not generate SDK 1.6 metadata")
+  if machineJson.contains("\"identity\""):
+    raise newException(ValueError, item.folder & " still generated machine.json identity")
+  if item.kind == "sample" and
+      not machineJson.contains("\"base\": \"drumSampler\""):
+    raise newException(ValueError, "sample template did not generate its drumSampler base")
   if fullCheck:
     case item.kind
     of "synth":

@@ -24,8 +24,10 @@ atlas install
 
 - `config.nims` owns `machineId`, `machineSource`, `buildRoot`, `stockOs`,
   `layout`, and the task names.
-- `machine.json` declares the SDK version, kind, description, identity, and
-  optional services.
+- `machine.json` declares the SDK version, kind, description, and optional
+  services. SDK 1.5+ machines have no `identity`; the build layout gives them
+  engine and page numbers. Set `layout` to the previous `layout.json` to keep
+  existing numbers.
 - `definition.json` owns the controls, presets, and resource budget. Do not
   hand-edit the generated copy under `build/`.
 - `src/mysynth.nim` implements `Voice`, `Shared`, `DisplayState`, `Frame`, and

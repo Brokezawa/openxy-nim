@@ -54,10 +54,10 @@ block playback:
   doAssert not sampleBlock.transport.isEmpty
 
 block pad_services:
-  doAssert uint16(sampleDefaults()) == 0
+  doAssert uint32(sampleDefaults()) == 0
   var settings = PadSettings(0)
   drumControl(settings, DrumControl(knob: 0, direction: 0, pressed: true))
-  doAssert uint16(settings) == 1
+  doAssert uint32(settings) == 1
   var panel: DrumPanel
   drumPanel(settings, region, zeroParameters(), panel)
   doAssert not panel.repeat

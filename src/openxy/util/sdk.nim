@@ -59,6 +59,8 @@ proc sdkCommand*(command: SdkCommand; machineDir, outputDir: string;
   of sdkCompile:
     result.add " compile --machine " & quoteShell(machineDir) &
       " --out " & quoteShell(outputDir)
+    if layout.len != 0:
+      result.add " --layout " & quoteShell(layout)
   of sdkBuild:
     if stockOs.len == 0:
       raise newException(ValueError, "build requires stockOs in the template config.nims")

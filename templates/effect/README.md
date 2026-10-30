@@ -17,8 +17,9 @@ If the template is copied into an existing project, use
 
 - `config.nims` owns `machineId`, `machineSource`, `buildRoot`, `stockOs`,
   `layout`, and the task names.
-- `machine.json` declares the SDK version, effect kind, identity, and the
-  `dryParameter` the SDK mixes outside the callback.
+- `machine.json` declares the SDK version, effect kind, and the `dryParameter`
+  the SDK mixes outside the callback. The build layout gives the effect its
+  number.
 - `definition.json` owns the controls, presets, delay-buffer size and transport
   resource.
 - `src/myeffect.nim` implements `State`, `initialize`, and `process`.

@@ -20,7 +20,8 @@ If the template is copied into an existing project, use
 
 - `config.nims` owns `machineId`, `machineSource`, `buildRoot`, `stockOs`,
   `layout`, and the task names.
-- `machine.json` declares SDK 1.4, the synth identity, and amp defaults.
+- `machine.json` declares SDK 1.6 and amp defaults. The build layout gives the
+  machine its numbers; with the supplied layout it keeps engine 47 and page 94.
 - `definition.json` owns the eight controls, the page map, presets, and the
   display budget. `"press": "page"` switches all four encoder positions.
 - `src/mysynth8.nim` implements `Voice`, `Shared`, `DisplayState`,

@@ -13,8 +13,9 @@ All notable changes to openxy are recorded here.
 - Synth, sample, and effect templates with host tests.
 - Browser preview for synths.
 - Blackfin device compile and four-machine collection build.
-- Pinned OP-XY SDK tag `v0.0.2` (`c10d61b`), firmware 1.2.1, and SDK API 1.4.
-- SDK 1.4 page headers, page switching, machine presets, 16 text slots, and
+- Pinned OP-XY SDK tag `v0.0.3` (`17840e3`), firmware 1.2.1, and SDK API 1.6.
+- SDK 1.6 18-bit pad settings, layout-provided machine numbers, sample engine
+  bases, page headers, page switching, machine presets, 16 text slots, and
   effect alternates.
 - Eight-control `synth-eight` template with the shared two-row header.
 - Optional Henka raw-binding regeneration with a checked-in normalization patch.

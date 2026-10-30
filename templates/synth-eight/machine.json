@@ -1,12 +1,8 @@
 {
   "schema": 1,
-  "sdk": "1.4",
+  "sdk": "1.6",
   "kind": "synth",
   "description": "A two-page Nim triangle/pulse synth with a shared eight-bar header.",
-  "identity": {
-    "engine": 47,
-    "page": 94
-  },
   "presetDefaults": {
     "amp": {
       "attack": 120,

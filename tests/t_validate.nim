@@ -97,16 +97,35 @@ block incomplete_preset:
 block wrong_kind_resources:
   var machine = parseJson(machineText)
   machine["kind"] = %"sample"
+  machine["base"] = %"drumSampler"
   check("kind resources", $machine, definitionText)
 
 block sdk_1_4:
   var machine = parseJson(machineText)
   machine["sdk"] = %"1.4"
+  machine["identity"] = %*{"engine": 46, "page": 93}
   doAssert accepts($machine, definitionText, "testsynth", mkSynth)
 
 block sdk_too_new:
   var machine = parseJson(machineText)
-  machine["sdk"] = %"1.5"
+  machine["sdk"] = %"1.7"
+  doAssert not accepts($machine, definitionText, "testsynth", mkSynth)
+
+block sdk_1_6:
+  var machine = parseJson(machineText)
+  machine["sdk"] = %"1.6"
+  doAssert accepts($machine, definitionText, "testsynth", mkSynth)
+
+block sdk_1_6_identity_rejected:
+  var machine = parseJson(machineText)
+  machine["sdk"] = %"1.6"
+  machine["identity"] = %*{"engine": 46, "page": 93}
+  doAssert not accepts($machine, definitionText, "testsynth", mkSynth)
+
+block base_on_synth_rejected:
+  var machine = parseJson(machineText)
+  machine["sdk"] = %"1.6"
+  machine["base"] = %"sampler"
   doAssert not accepts($machine, definitionText, "testsynth", mkSynth)
 
 block too_many_texts_with_old_sdk:
@@ -121,6 +140,41 @@ block synth_eight_valid:
   let eightDefinition = readFile(templateRoot / ".." / "synth-eight" / "definition.json")
   doAssert accepts(eightMachine, eightDefinition, "mysynth8", mkSynth)
 
+block sample_1_6_drum_base:
+  let sampleMachine = readFile(templateRoot / ".." / "sample" / "machine.json")
+  let sampleDefinition = readFile(templateRoot / ".." / "sample" / "definition.json")
+  var machine = parseJson(sampleMachine)
+  machine["sdk"] = %"1.6"
+  machine["base"] = %"drumSampler"
+  doAssert accepts($machine, sampleDefinition, "mysample", mkSample)
+
+block sample_1_6_needs_base:
+  let sampleMachine = readFile(templateRoot / ".." / "sample" / "machine.json")
+  let sampleDefinition = readFile(templateRoot / ".." / "sample" / "definition.json")
+  var machine = parseJson(sampleMachine)
+  machine["sdk"] = %"1.6"
+  machine.delete("base")
+  doAssert not accepts($machine, sampleDefinition, "mysample", mkSample)
+
+block sample_sampler_rejects_pad_services:
+  let sampleMachine = readFile(templateRoot / ".." / "sample" / "machine.json")
+  let sampleDefinition = readFile(templateRoot / ".." / "sample" / "definition.json")
+  var machine = parseJson(sampleMachine)
+  machine["sdk"] = %"1.6"
+  machine["base"] = %"sampler"
+  doAssert not accepts($machine, sampleDefinition, "mysample", mkSample)
+
+block sample_sampler_without_pad_services:
+  let sampleMachine = readFile(templateRoot / ".." / "sample" / "machine.json")
+  let sampleDefinition = readFile(templateRoot / ".." / "sample" / "definition.json")
+  var machine = parseJson(sampleMachine)
+  machine["sdk"] = %"1.6"
+  machine["base"] = %"sampler"
+  var definition = parseJson(sampleDefinition)
+  definition["resources"]["padSettings"] = %0
+  definition["resources"]["drumControls"] = %0
+  doAssert accepts($machine, $definition, "mysample", mkSample)
+
 block partial_page_needs_1_4:
   let eightMachine = readFile(templateRoot / ".." / "synth-eight" / "machine.json")
   let eightDefinition = readFile(templateRoot / ".." / "synth-eight" / "definition.json")
@@ -134,6 +188,7 @@ block partial_page_needs_1_4:
     preset.delete("smooth")
   doAssert accepts($machine, $definition, "mysynth8", mkSynth)
   machine["sdk"] = %"1.3"
+  machine["identity"] = %*{"engine": 47, "page": 94}
   doAssert not accepts($machine, $definition, "mysynth8", mkSynth)
 
 block effect_alternate_valid:

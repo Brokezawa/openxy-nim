@@ -39,7 +39,7 @@ proc renderSample*(voice: var Voice; sampleBlock: SampleBlock) {.raises: [].} =
   let channels = if sampleBlock.outputChannels == 2: 2 else: 1
   let first = sampleBlock.region.begin
   let last = sampleBlock.region.`end`
-  voice.once = (uint16(sampleBlock.settings) and 1) != 0 or
+  voice.once = (uint32(sampleBlock.settings) and 1) != 0 or
     sampleBlock.parameters[1] > Q31(0x40000000)
   for index in 0 ..< BlockFrames:
     if voice.position < first or voice.position >= last:
@@ -68,12 +68,12 @@ proc sampleAssign*(assignment: SampleAssignment): PadSettings {.raises: [].} =
 
 proc drumControl*(value: var PadSettings; event: DrumControl) {.raises: [].} =
   if event.knob == 0 and event.pressed:
-    value = PadSettings(uint16(value) xor uint16(Once))
+    value = PadSettings(uint32(value) xor uint32(Once))
 
 
 proc drumPanel*(value: PadSettings; saved: SampleRegion;
                 parameters: openArray[Q31]; panel: var DrumPanel) {.raises: [].} =
-  panel.repeat = (uint16(value) and uint16(Once)) == 0
+  panel.repeat = (uint32(value) and uint32(Once)) == 0
   panel.level = 0x7fffffff'u32
 
 

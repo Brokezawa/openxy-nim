@@ -341,7 +341,7 @@ diff -ruN a/src/openxy/private/raw/opxy/sample_engine.nim b/src/openxy/private/r
 -    track_transpose *:cint
 -    drum_transpose *:cint
 -let sample_unity_level *:cint
-+  PadSettings* = uint16
++  PadSettings* = uint32
 +
 +  SampleRegion* {.importcpp: "opxy::SampleRegion",
 +    header: "opxy/sample_engine.hpp".} = object

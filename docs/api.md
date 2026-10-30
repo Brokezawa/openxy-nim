@@ -15,8 +15,11 @@
 `Phase` and `PhaseIncrement` are distinct `uint32` values. Adding an increment
 to a phase wraps. `Q10` is display geometry, `Q27` is an unsigned sample-region
 gain, `Cents` and `Semitones` are tuning, `SampleFrame` is a sample index,
-`VoiceId` is a stable nonzero owner, `PadSettings` is a 16-bit SDK-defined
-value, and `Paint` is the four-byte draw enum.
+`VoiceId` is a stable nonzero owner, `PadSettings` is a 32-bit SDK-defined value
+with an 18-bit range (0..262143), and `Paint` is the four-byte draw enum.
+`toUint32` returns the saved value, `toPadSettings` masks to 18 bits, and
+existing 16-bit saved values keep their numeric value. Values above 65535
+require SDK 1.6.
 
 ## Views
 
@@ -54,6 +57,12 @@ Helpers: `place`, `hide`, `shade`, `turn`, `text`, `header`, `rotation`,
 `holdStarted`, `holdEnded`, and `noteReleased`; the first snapshot and track
 changes only establish a baseline.
 
+`displayReset` runs when an owned synth page becomes selected and when its
+selected track changes. The next display callback starts from reset state; use
+it for an entrance or a fresh note-activity baseline. Continuing to show the
+same page and track does not reset it. Audio state, note routing, and the
+drawing input ABI are unchanged.
+
 ### Page header
 
 SDK 1.4 adds the shared two-row synth header. Add `PageHeader` to
@@ -90,11 +99,19 @@ Frame shim. Nodes 0 and 1 are the template's path nodes; nodes 2 through 9 are
 the header bars. `DefaultPageHeaderSlots` is the standard
 `[[0, 1, 2, 3], [4, 5, 6, 7]]` page map.
 
-## SDK 1.4 metadata
+## SDK 1.6 metadata
 
-A machine declares `machine.json.sdk` as `"1.4"` to use the current surface.
-The SDK builds machines from 1.0 through 1.4.
+A machine declares `machine.json.sdk` as `"1.6"` to use the current surface.
+The SDK builds machines from 1.0 through 1.6.
 
+- SDK 1.5 and newer remove `machine.json.identity`; the build layout assigns
+  the engine, effect, and page numbers. Pass the previous `layout.json` to
+  `nim compile` or `nim build` to keep existing numbers.
+- A sample engine targeting 1.5 or newer declares `"base": "sampler"` or
+  `"base": "drumSampler"`. Pad settings and drum controls require the drum
+  sampler base.
+- A legacy SDK 1.4 machine may keep `identity`; the layout gives it those
+  numbers when they are free.
 - `definition.json` accepts `"press": "page"` for five- to eight-parameter
   synths. SDK 1.3 supports a full second page; a partial page requires 1.4.
 - Effects accept up to eight controls. Parameters after the fourth are

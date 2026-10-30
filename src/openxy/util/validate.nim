@@ -229,7 +229,10 @@ proc validateResources(definition: JsonNode; kind: MachineKind; page, sdkMinor: 
     require(result.hasPadSettings or not result.hasDrumControls,
       "drumControls edits pad settings: it needs padSettings")
     if result.hasPadSettings or result.hasDrumControls:
-      require(page == 7, "pad settings and drum controls need stock page 7")
+      if sdkMinor >= 5:
+        require(page == 7, "pad settings and drum controls need base drumSampler")
+      else:
+        require(page == 7, "pad settings and drum controls need stock page 7")
   of mkEffect:
     allowedKeys(resources, ["bufferBytes", "transport"], "resources")
     let buffer = optionalInt(resources, "bufferBytes", 0)
@@ -286,14 +289,27 @@ proc validateDefinition(definition: JsonNode; kind: MachineKind; page, sdkMinor:
   result = (name, resources.display, resources.hasAnalysis, resources.hasPadSettings,
     resources.hasDrumControls, resources.hasBuffer, resources.hasTransport, -1)
 
-proc validateIdentity(machine: JsonNode; kind: MachineKind): int =
-  let identity = field(machine, "identity")
-  require(identity.kind == JObject, "identity must be an object")
-  let slot = if kind == mkEffect: "effect" else: "engine"
-  allowedKeys(identity, [slot, "page"], "identity")
-  requireKeys(identity, [slot, "page"], "identity")
-  discard intField(identity, slot)
-  intField(identity, "page")
+proc validateMachineIdentity(machine: JsonNode; kind: MachineKind; sdkMinor: int): int =
+  if sdkMinor < 5:
+    require(not machine.hasKey("base"), "a sample base needs SDK 1.5 or newer")
+    let identity = field(machine, "identity")
+    require(identity.kind == JObject, "identity must be an object")
+    let slot = if kind == mkEffect: "effect" else: "engine"
+    allowedKeys(identity, [slot, "page"], "identity")
+    requireKeys(identity, [slot, "page"], "identity")
+    discard intField(identity, slot)
+    intField(identity, "page")
+  else:
+    require(not machine.hasKey("identity"),
+      "from SDK 1.5 machine.json has no identity; use the layout and sample base")
+    if kind == mkSample:
+      let base = stringField(machine, "base")
+      require(base in ["sampler", "drumSampler"],
+        "a sample engine names base sampler or drumSampler")
+      if base == "drumSampler": 7 else: 2
+    else:
+      require(not machine.hasKey("base"), "only a sample engine names a base")
+      if kind == mkEffect: 21 else: 0
 
 proc validateSource(source: string) =
   for line in source.splitLines:
@@ -320,8 +336,8 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
     definition = parseJson(definitionSource)
   except JsonParsingError as error:
     fail("invalid JSON: " & error.msg)
-  allowedKeys(machine, ["schema", "sdk", "kind", "description", "identity", "sources", "includes",
-    "icon", "presetDefaults", "presets", "dryParameter"], "machine.json")
+  allowedKeys(machine, ["schema", "sdk", "kind", "description", "identity", "base", "sources",
+    "includes", "icon", "presetDefaults", "presets", "dryParameter"], "machine.json")
   require(intField(machine, "schema") == 1, "unknown machine.json schema")
   let sdkVersion = stringField(machine, "sdk")
   let versionParts = sdkVersion.split('.')
@@ -329,14 +345,14 @@ proc loadMachine*(project: Project; machineText = ""; definitionText = "";
     "machine.json sdk must be <major>.<minor>")
   for part in versionParts:
     require(part.allCharsInSet({'0'..'9'}), "machine.json sdk must be <major>.<minor>")
-  require(versionParts[0] == "1" and versionParts[1].parseInt <= 4,
+  require(versionParts[0] == "1" and versionParts[1].parseInt <= 6,
     "machine.json targets unsupported SDK: " & sdkVersion)
   let sdkMinor = versionParts[1].parseInt
   let kindText = stringField(machine, "kind")
   let kind = parseMachineKind(kindText)
   let description = stringField(machine, "description")
   require(description.len > 0 and description.len <= 160, "machine description is 1..160 characters")
-  let page = validateIdentity(machine, kind)
+  let page = validateMachineIdentity(machine, kind, sdkMinor)
   if kind != mkSynth:
     for key in ["sources", "includes"]:
       if machine.hasKey(key):

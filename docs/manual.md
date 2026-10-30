@@ -62,7 +62,9 @@ environment variables.
 
 1. Copy `templates/synth` and edit the constants at the top of `config.nims`:
    `machineId`, `machineSource`, `buildRoot`, `stockOs`, and `layout`.
-2. Edit `machine.json` for the SDK version, kind, identity, and description.
+2. Edit `machine.json` for the SDK version, kind, description, and (for a
+   sample engine) the `sampler` or `drumSampler` base. SDK 1.5 and newer have no
+   `identity`; the build layout assigns the machine numbers.
 3. Edit `definition.json` for controls, presets, and resources.
 4. Implement `Voice`, `Shared`, `DisplayState`, `Frame`, and the callbacks in
    `src/<machineId>.nim`.
@@ -99,8 +101,10 @@ again and reload the browser.
 - `templates/effect` implements a send effect with a delay buffer, transport,
   and a dry control.
 
-Sample engines use stock sample page 7 when pad settings or drum controls are
-enabled. Effects use the stock FX page and an FX ID that stock leaves free.
+Sample engines use `"base": "drumSampler"` when pad settings or drum controls
+are enabled; a `"sampler"` base plays chromatically without the pad services.
+Legacy SDK 1.4 sample engines use stock sample page 7. Effects use the stock FX
+page and an effect number the layout assigns.
 
 The SDK previews synths only. Both synth templates use the browser preview;
 sample and effect machines use host tests and the device compile. The SDK also
@@ -156,9 +160,9 @@ nim compile
 Output: `build/out/<machineId>/sdkCompile/`.
 
 This builds the Blackfin module without a stock OS. It is the fast device check.
-The SDK prints the module memory. The current templates use about 29.7 KiB for
-the synth, 33.4 KiB for the two-page synth, and 93.7 KiB for the sample engine;
-these numbers can change as the machine grows.
+The SDK prints the module memory. The current templates use about 76.1 KiB for
+the synth, 79.8 KiB for the two-page synth, and 138.7 KiB for the sample engine
+of the 2032 KiB module region; these numbers can change as the machine grows.
 
 ## Firmware build
 
@@ -184,10 +188,10 @@ To build several machines together, call the SDK directly with repeated
 
 ```sh
 python3 open-xy/sdk.py build \
-  --machine build/synth/mysynth \
-  --machine build/synth-eight/mysynth8 \
-  --machine build/sample/mysample \
-  --machine build/effect/myeffect \
+  --machine templates/synth/build/synth/mysynth \
+  --machine templates/synth-eight/build/synth/mysynth8 \
+  --machine templates/sample/build/sample/mysample \
+  --machine templates/effect/build/effect/myeffect \
   --stock-os /path/to/stock-1.2.1/os.ldr \
   --out builds/collection-001
 ```
