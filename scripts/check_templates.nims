@@ -58,7 +58,7 @@ proc scanSource(path: string) =
           path & ":" & $(index + 1) & " uses unsafe token " & token)
 
 proc checkTemplateSources() =
-  for folder in ["synth", "synth-eight", "sample", "effect"]:
+  for folder in ["synth", "synth-eight", "sample", "effect", "extension"]:
     let source = templatesRoot / folder / "src"
     for path in walkDirRec(source):
       if path.endsWith(".nim"):
@@ -136,6 +136,31 @@ if not unsafeRejected:
 for item in cases:
   let project = prepare(item)
   exercise(item, project)
+
+# The extension template uses the parallel extension build path.
+let extensionCase = TemplateCase(folder: "extension", id: "mynotify",
+  kind: "extension", generated: @[])
+let extensionProject = prepare(extensionCase)
+run "cd " & quoteShell(extensionProject) & " && nim test --skipParentCfg:on"
+run "cd " & quoteShell(extensionProject) & " && nim gen --skipParentCfg:on"
+let extensionGenerated = extensionProject / "build" / "extension" / "mynotify"
+for relative in ["extension.json", "extension.cpp"]:
+  if not fileExists(extensionGenerated / relative):
+    raise newException(IOError, "extension template did not generate " & relative)
+let extensionAdapter = readFile(extensionGenerated / "extension.cpp")
+if not extensionAdapter.contains("with_queued_control"):
+  raise newException(ValueError, "extension adapter did not select queued_control")
+if extensionAdapter.contains("with_context"):
+  raise newException(ValueError, "extension adapter selected an unset hook")
+if fullCheck:
+  let synthGenerated = scratch / "synth" / "build" / "synth" / "mysynth"
+  let configPath = extensionProject / "config.nims"
+  writeFile(configPath,
+    readFile(configPath).replace("machine = \"\"",
+      "machine = \"" & synthGenerated & "\""))
+  run "cd " & quoteShell(extensionProject) & " && nim compile --skipParentCfg:on"
+  if not dirExists(extensionProject / "build" / "out" / "mynotify" / "sdkCompile"):
+    raise newException(IOError, "extension device compile did not produce its output folder")
 
 # A broken definition must fail during validation, not during the SDK build.
 let synthProject = scratch / "synth"

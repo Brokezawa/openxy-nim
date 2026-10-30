@@ -62,6 +62,7 @@ This also runs:
 - Synth Blackfin device compile.
 - Sample Blackfin device compile.
 - The synth-eight device compile and inline-stage review.
+- The extension generation and device compile with a synth collection.
 
 The effect is not compiled standalone because the SDK rejects an effect-only
 collection. The four-machine collection check covers the effect and the
@@ -84,6 +85,10 @@ synth-eight template.
 - `t_abi` — C++ ABI and generated-header checks.
 - `t_raw` — raw generated bindings.
 - `t_page_header` — C++/Nim page-header parity.
+- `t_extension_abi` — extension sizes, offsets, and the 32-bit C++ probe.
+- `t_extension` — Hooks builder and Actions counts/bools.
+- `t_extension_validate` — extension.json, registry, and source validation.
+- `t_double_tap` — C++/Nim double-tap parity.
 
 ## Template checks
 
@@ -174,13 +179,26 @@ cd templates/sample
 nim compile --skipParentCfg:on
 ```
 
+Extension:
+
+```sh
+cd templates/extension
+nim test --skipParentCfg:on
+nim gen --skipParentCfg:on
+# set machine to ../synth/build/synth/mysynth, then:
+nim compile --skipParentCfg:on
+```
+
 The SDK prints a JSON memory report and a line like:
 
 ```text
 Memory 76.1 of 2032 KiB: sdk 65.0 KiB, mysynth 11.1 KiB
 Memory 79.9 of 2032 KiB: sdk 65.0 KiB, mysynth8 14.8 KiB
 Memory 138.9 of 2032 KiB: sdk 114.1 KiB, mysample 24.9 KiB
+Memory 82.3 of 2032 KiB: sdk 71.1 KiB, mysynth 11.1 KiB
 ```
+
+The extension line is for the `mynotify` extension with the synth collection.
 
 Memory values can change; the important result is a successful link below the
 shared reservation.

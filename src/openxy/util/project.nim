@@ -63,6 +63,9 @@ func machineDir*(project: Project): string =
 func sourceDir*(project: Project): string =
   project.source.parentDir
 
+func isLanguageKeyword*(id: string): bool =
+  id in NimKeywords or id in CxxKeywords
+
 func isValidMachineId*(id: string): bool =
   if id.len == 0 or id.len > MaxMachineIdLength:
     return false

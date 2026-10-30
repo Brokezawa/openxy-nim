@@ -42,6 +42,7 @@ templates/synth/       self-contained four-control synth and build tasks
 templates/synth-eight/ self-contained eight-control two-page synth
 templates/sample/      self-contained sample engine and build tasks
 templates/effect/      self-contained send effect and build tasks
+templates/extension/   self-contained firmware extension and build tasks
 scripts/             maintainer and template task implementations
 open-xy/             pinned OP-XY SDK checkout (submodule target)
 open-xy.lock         SDK commit checked by `nim doctor`
@@ -63,8 +64,8 @@ and the expected lock value.
 
 ## Use a template
 
-Copy one of `templates/synth`, `templates/synth-eight`, `templates/sample`, or
-`templates/effect` to your project, then:
+Copy one of `templates/synth`, `templates/synth-eight`, `templates/sample`,
+`templates/effect`, or `templates/extension` to your project, then:
 
 ```sh
 atlas init
@@ -80,6 +81,7 @@ nim gen
 | `templates/synth-eight` | eight-control two-page synth with `PageHeader` | browser preview |
 | `templates/sample` | sample engine with pad, drum and analysis services | device only |
 | `templates/effect` | send effect with buffer and transport | device only |
+| `templates/extension` | `mynotify` firmware extension with a Record double-tap | device only |
 
 Edit the constants at the top of the template's `config.nims` and the metadata
 in `machine.json`/`definition.json`. The machine source is
@@ -170,11 +172,12 @@ Nim's conditional-compilation boilerplate.
 
 ## Status
 
-The synth, sample, and effect paths are implemented for SDK API 1.6 and
-firmware 1.2.1: typed API, validation, measurement, generator, four templates
-including the two-page synth, host tests, sample/effect service coverage,
-browser preview for synths, Blackfin development compiles, and a four-machine
-firmware collection build. The SDK's stock startup table requires at least one
+The synth, sample, effect, and extension paths are implemented for SDK API 1.6
+and firmware 1.2.1: typed API, validation, measurement, generator, four machine
+templates and one extension template, host tests, sample/effect service
+coverage, browser preview for synths, Blackfin development compiles, and a
+four-machine plus extension firmware collection build. The extension API is
+experimental and source-level. The SDK's stock startup table requires at least one
 synth or sample engine in a collection, so an effect is compiled with one.
 
 The 0.1.0 release is a source-only experimental developer preview. It does not

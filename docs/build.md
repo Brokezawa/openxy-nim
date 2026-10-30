@@ -135,3 +135,41 @@ use it to keep machine numbers stable across builds.
 Generated Nim C++ stays under `vendor/openxy/` because the SDK's contributor
 lint rejects conditional compilation and platform primitives outside `vendor`.
 The `generated/machine.cpp` file is only a one-line include shim.
+
+## Extensions
+
+An extension is a separate folder with `extension.json`, a Nim source, and a
+generated C++ adapter. `scripts/extension_tasks.nims` implements its
+`test`/`gen`/`compile`/`build`/`clean` tasks; `templates/extension` is the
+starter.
+
+`nim gen` validates the metadata against `profiles/extensions.json`, imports
+the Nim module to read its `const hooks`, writes a wrapper with only the
+selected callback bridges, compiles it to C++ (`--cppCompileToNamespace:<id>`),
+packages the amalgamation, and writes the SDK folder:
+
+```
+build/extension/<id>/
+  extension.json
+  extension.cpp          # generated adapter, do not edit
+build/extension/nim/<id>/
+  extension.cpp          # packaged Nim C++
+  vendor/openxy/         # nimbase, shims, warnings
+  wrapper.nim
+```
+
+The Nim C++ lives outside the SDK-scanned extension folder so the SDK's
+contributor lint sees only the generated adapter and metadata. `nim compile`
+and `nim build` call:
+
+```sh
+python3 <sdk>/sdk.py compile --extension <build/extension/id> \
+  --machine <generated-machine> --out <out>
+python3 <sdk>/sdk.py build --extension <build/extension/id> \
+  --machine <generated-machine> --out <out> --stock-os <os>
+```
+
+A machine folder is required because the stock startup table needs a synth or
+sample engine. The extension's `nim test` is the primary host suite; a C++
+`tests/*.cpp` and `sdk.py test --extension` are optional. The extension API is
+experimental in 0.1.0.

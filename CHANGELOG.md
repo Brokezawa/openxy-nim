@@ -22,6 +22,10 @@ All notable changes to openxy are recorded here.
   bases, page headers, page switching, machine presets, 16 text slots, and
   effect alternates.
 - Eight-control `synth-eight` template with the shared two-row header.
+- Experimental extension API: `Hooks`, `Actions`, `DoubleTap`, a generated
+  C++ adapter, and the `mynotify` extension template.
+- Extension validation, host tests, 32-bit ABI probe, and `nim checkTemplates`
+  coverage.
 - Optional Henka raw-binding regeneration with a checked-in normalization patch.
 - GitHub Actions release checks for Linux, macOS, and Atlas.
 - Manual, testing, release, and hardware-testing documentation.
@@ -34,6 +38,12 @@ All notable changes to openxy are recorded here.
   public/testkit constructors.
 - `nim checkTemplates` rejects unsafe tokens in template sources.
 
+### Fixed
+
+- Both synth templates write path points in Q10, so their two rings render at
+  the intended radius instead of collapsing to dots; `mysynth` uses visible
+  palette shades and centers its nodes at 240±32,120 with Motion-driven movement.
+
 ### Limits
 
 - Source-only experimental developer preview.
@@ -41,6 +51,8 @@ All notable changes to openxy are recorded here.
 - Device builds are not hardware-qualified until the release hardware test is
   recorded.
 - Browser preview is synth-only.
+- The extension API is experimental, source-level, and covered by one
+  `mynotify` hardware row, not a stability guarantee.
 - Windows is untested.
 - Nix and direnv are not part of the 0.1.0 setup.
 - `--mm:arc` is the tested device profile; `--mm:none` is experimental.

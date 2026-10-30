@@ -2,6 +2,7 @@
 #include <opxy/audio.hpp>
 #include <opxy/draw.hpp>
 #include <opxy/effect.hpp>
+#include <opxy/extension.hpp>
 #include <opxy/sample_analysis.hpp>
 #include <opxy/sample_engine.hpp>
 #include <opxy/transport.hpp>
@@ -29,3 +30,18 @@ static_assert(sizeof(opxy::SampleAssignment) == (sizeof(void*) == 8 ? 40 : 32),
 static_assert(sizeof(opxy::SampleAnalysis) == (sizeof(void*) == 8 ? 40 : 28),
               "SampleAnalysis layout");
 static_assert(sizeof(opxy::Buffer) == (sizeof(void*) == 8 ? 16 : 8), "Buffer layout");
+
+using namespace opxy::extensions;
+static_assert(sizeof(RecordingContext) == 28, "RecordingContext layout");
+static_assert(sizeof(Context) == 32, "Context layout");
+static_assert(sizeof(Note) == 12, "Note layout");
+static_assert(sizeof(LiveNote) == 20, "LiveNote layout");
+static_assert(sizeof(NoteOff) == 8, "NoteOff layout");
+static_assert(sizeof(Tick) == 8, "Tick layout");
+static_assert(sizeof(Control) == 16, "Control layout");
+static_assert(sizeof(Actions) == (sizeof(void*) == 8 ? 24 : 12), "Actions layout");
+static_assert(sizeof(Hooks) == (sizeof(void*) == 8 ? 48 : 24), "Hooks layout");
+static_assert(offsetof(Note, position) == 0, "Note position offset");
+static_assert(offsetof(Note, length) == 4, "Note length offset");
+static_assert(offsetof(Note, pitch) == 8, "Note pitch offset");
+static_assert(offsetof(Note, velocity) == 9, "Note velocity offset");

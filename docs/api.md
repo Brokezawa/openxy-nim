@@ -179,6 +179,67 @@ It also provides `initSampleView`, `initAudioView(openArray)`,
 `initMutableAudioView(var openArray)`, `initBuffer(var openArray)`,
 `initSampleBlock`, and `initEffectBlock`, so tests never build raw pointers.
 
+## Extensions
+
+SDK 1.6 adds firmware extensions. Openxy exposes them experimentally through
+`openxy/extension` (also available from `import openxy`). An extension is not a
+machine: it has `extension.json`, a Nim source, and a generated C++ adapter in
+its build folder.
+
+The callback values are plain objects:
+
+- `Context` carries `RecordingContext` (opaque project/pattern IDs, track,
+  length, scale, quantization, editable, recordable) and `playing`.
+- `Note` is 12 bytes, `LiveNote` 20, `NoteOff` 8, `Tick` 8, and `Control` 16.
+- `Time` is a distinct `uint64`; `Track`, `ProjectId`, `PatternId`, and `Ticks`
+  are distinct `uint32` values.
+- `Context`, `Control`, `Actions`, and a `Note` array are borrowed for the
+  callback; copy anything that must outlive it.
+
+Declare the events with the builder:
+
+```nim
+const hooks* = initHooks()
+  .withQueuedControl(queuedControl)
+```
+
+`initHooks()` leaves every callback nil. Unset hooks stay null in the generated
+adapter, so the SDK does not call an event the extension did not name. A
+callback is `{.cdecl, raises: [].}`.
+
+`Actions` exposes:
+
+```nim
+proc insertNotes*(actions: Actions; context: Context; track: Track;
+                  notes: openArray[Note]): uint32 {.raises: [].}
+proc replaceNotes*(...): uint32 {.raises: [].}
+proc notify*(actions: Actions; text: string): bool {.raises: [].}
+```
+
+`insertNotes` and `replaceNotes` return the inserted prefix length; `0` means
+refused or nothing written. `notify` returns false for text outside 1–31
+characters; the SDK may still refuse the popup. No action raises.
+
+`DoubleTap` is a pure Nim port of the SDK helper:
+
+```nim
+var tap: DoubleTap
+discard tap.press(control.time, control.unmodified)
+if tap.release(control.time):
+  discard actions.notify("captured")
+```
+
+Use `tap.cancel()` for another control, a context change, or leaving the
+supported screen. `RecordKey` is the stock Record key (50).
+
+The SDK callbacks have no userdata pointer, so extension state is module-global.
+Callbacks run serially on the controller path; they must not allocate, block,
+perform I/O, or raise. The extension API is experimental in 0.1.0 and is
+source-level, not a binary ABI.
+
+See `templates/extension` and the [manual](manual.md#extension-template) for
+the build path.
+
 ## Unsafe code boundary
 
 Machine and extension sources do not use `cast`, `ptr`, `addr`, `unsafeAddr`,

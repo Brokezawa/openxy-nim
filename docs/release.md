@@ -90,6 +90,8 @@ Complete [hardware testing](hardware-test.md). The minimum test covers:
 - synth audio, controls, and display;
 - sample playback, pad, and drum page;
 - effect on a send;
+- the `mynotify` extension popup on a Record double-tap and unchanged single-tap
+  stock behavior;
 - reboot without a crash.
 
 The record belongs in `docs/hardware-test.md`. Do not put private sample
@@ -125,6 +127,7 @@ Release notes must include:
 
 - the tested configuration and date;
 - SDK tag `v0.0.3` and API 1.6;
+- the experimental `mynotify` extension row and its limits;
 - the stock OS 1.2.1 version;
 - the package hash or a link to the hardware record;
 - “Still experimental; no recovery guarantee.”;

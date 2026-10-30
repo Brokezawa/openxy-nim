@@ -26,7 +26,7 @@ proc copyPath(source, destination: string) =
     ensureDir(destination.parentDir)
     copyFileCompat(source, destination)
 
-proc writeVendor(directory: string) =
+proc writeVendor*(directory: string) =
   let vendor = directory / "vendor" / "openxy"
   ensureDir(vendor)
   let nimbase = nimbasePath()

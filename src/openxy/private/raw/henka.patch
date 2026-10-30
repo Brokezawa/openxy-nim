@@ -472,3 +472,143 @@ diff -ruN a/src/openxy/private/raw/opxy/types.nim b/src/openxy/private/raw/opxy/
 +
 +proc header_amount*(output: cstring; capacity: uint32; value: int32) {.
 +  importcpp: "opxy::draw::header_amount(@)", header: "opxy/page_header.hpp".}
+diff -ruN a/src/openxy/private/raw/opxy/extension.nim
+--- a/src/openxy/private/raw/opxy/extension.nim
++++ b/src/openxy/private/raw/opxy/extension.nim
+@@ -1,64 +1,73 @@
++## Raw OP-XY extension bindings generated from `opxy/extension.hpp`.
++##
++## Henka maps the SDK's `u32` and `u8` aliases to C `int` and its reference
++## parameters to by-value callbacks. The checked-in normalization patch keeps
++## the fields exact, passes `Context` by pointer, and removes the C++ method
++## surface that the ergonomic layer does not use.
++
+ type
+-  RecordingContext *{.inheritable, importcpp:"opxy::extensions::RecordingContext", header:"opxy/extension.hpp".}= object
+-    project *:cint
+-    pattern *:cint
+-    track *:cint
+-    length *:cint
+-    scale *:cint
+-    quantization *:cint
+-    editable *:bool
+-    recordable *:bool
+-  Context *{.inheritable, importcpp:"opxy::extensions::Context", header:"opxy/extension.hpp".}= object
+-    recording *:RecordingContext
+-    playing *:bool
+-  Note *{.inheritable, importcpp:"opxy::extensions::Note", header:"opxy/extension.hpp".}= object
+-    position *:cint
+-    length *:cint
+-    pitch *:cint
+-    velocity *:cint
+-  LiveNote *{.inheritable, importcpp:"opxy::extensions::LiveNote", header:"opxy/extension.hpp".}= object
+-    track *:cint
+-    pitch *:cint
+-    velocity *:cint
+-    position *:cint
+-    collision_radius *:cint
+-  NoteOff *{.inheritable, importcpp:"opxy::extensions::NoteOff", header:"opxy/extension.hpp".}= object
+-    track *:cint
+-    pitch *:cint
+-  Tick *{.inheritable, importcpp:"opxy::extensions::Tick", header:"opxy/extension.hpp".}= object
+-    delta_q8 *:cint
+-    discontinuity *:bool
+-  Time * = culonglong
+-  Control *{.inheritable, importcpp:"opxy::extensions::Control", header:"opxy/extension.hpp".}= object
+-    key *:cint
+-    pressed *:bool
+-    accepted *:bool
+-    unmodified *:bool
+-    time *:Time
+-  Actions *{.inheritable, importcpp:"opxy::extensions::Actions", header:"opxy/extension.hpp".}= object
+-    insert_notes *:proc (a0 :Context; a1 :cint; a2 :ptr Note; a3 :cint) :cint {.cdecl.}
+-    notify *:proc (a0 :cstring) {.cdecl.}
+-    replace_notes *:proc (a0 :Context; a1 :cint; a2 :ptr Note; a3 :cint) :cint {.cdecl.}
+-  OnContext * = proc (a0 :Context) {.cdecl.}
+-  OnRecordableNoteOn * = proc (a0 :Context; a1 :LiveNote) {.cdecl.}
+-  OnSelectedNoteOff * = proc (a0 :Context; a1 :NoteOff) {.cdecl.}
+-  OnRecordingTick * = proc (a0 :Context; a1 :Tick) {.cdecl.}
+-  OnInputActivity * = proc () {.cdecl.}
+-  OnQueuedControl * = proc (a0 :Context; a1 :Control; a2 :Actions) {.cdecl.}
+-  Hooks *{.inheritable, importcpp:"opxy::extensions::Hooks", header:"opxy/extension.hpp".}= object
+-    context *:OnContext
+-    recordable_note_on *:OnRecordableNoteOn
+-    selected_note_off *:OnSelectedNoteOff
+-    recording_tick *:OnRecordingTick
+-    input_activity *:OnInputActivity
+-    queued_control *:OnQueuedControl
+-proc `==` *(this :RecordingContext; other :RecordingContext) :bool {.importcpp:"# == #", header:"opxy/extension.hpp".}
+-let record *:cint
+-proc Hooks_create *() :Hooks {.importcpp:"opxy::extensions::Hooks(@)", constructor, header:"opxy/extension.hpp".}
+-proc Hooks_create *(a :OnContext; b :OnRecordableNoteOn; c :OnSelectedNoteOff; d :OnRecordingTick; e :OnInputActivity; f :OnQueuedControl) :Hooks {.importcpp:"opxy::extensions::Hooks(@)", constructor, header:"opxy/extension.hpp".}
+-proc with_context *(this :Hooks; f :OnContext) :Hooks {.importcpp:"#.with_context(@)", header:"opxy/extension.hpp".}
+-proc with_recordable_note_on *(this :Hooks; f :OnRecordableNoteOn) :Hooks {.importcpp:"#.with_recordable_note_on(@)", header:"opxy/extension.hpp".}
+-proc with_selected_note_off *(this :Hooks; f :OnSelectedNoteOff) :Hooks {.importcpp:"#.with_selected_note_off(@)", header:"opxy/extension.hpp".}
+-proc with_recording_tick *(this :Hooks; f :OnRecordingTick) :Hooks {.importcpp:"#.with_recording_tick(@)", header:"opxy/extension.hpp".}
+-proc with_input_activity *(this :Hooks; f :OnInputActivity) :Hooks {.importcpp:"#.with_input_activity(@)", header:"opxy/extension.hpp".}
+-proc with_queued_control *(this :Hooks; f :OnQueuedControl) :Hooks {.importcpp:"#.with_queued_control(@)", header:"opxy/extension.hpp".}
++  RecordingContext* {.completeStruct, importcpp: "opxy::extensions::RecordingContext",
++    header: "opxy/extension.hpp", bycopy.} = object
++    project*, pattern*, track*, length*, scale*, quantization*: uint32
++    editable*, recordable*: bool
++
++  Context* {.completeStruct, importcpp: "opxy::extensions::Context",
++    header: "opxy/extension.hpp", bycopy.} = object
++    recording*: RecordingContext
++    playing*: bool
++
++  Note* {.completeStruct, importcpp: "opxy::extensions::Note",
++    header: "opxy/extension.hpp", bycopy.} = object
++    position*: int32
++    length*: uint32
++    pitch*, velocity*: uint8
++
++  LiveNote* {.completeStruct, importcpp: "opxy::extensions::LiveNote",
++    header: "opxy/extension.hpp", bycopy.} = object
++    track*, pitch*, velocity*: uint32
++    position*: int32
++    collision_radius*: uint32
++
++  NoteOff* {.completeStruct, importcpp: "opxy::extensions::NoteOff",
++    header: "opxy/extension.hpp", bycopy.} = object
++    track*, pitch*: uint32
++
++  Tick* {.completeStruct, importcpp: "opxy::extensions::Tick",
++    header: "opxy/extension.hpp", bycopy.} = object
++    delta_q8*: uint32
++    discontinuity*: bool
++
++  Time* = uint64
++
++  Control* {.completeStruct, importcpp: "opxy::extensions::Control",
++    header: "opxy/extension.hpp", bycopy.} = object
++    key*: uint32
++    pressed*, accepted*, unmodified*: bool
++    time*: Time
++
++  Actions* {.completeStruct, importcpp: "opxy::extensions::Actions",
++    header: "opxy/extension.hpp", bycopy.} = object
++    insert_notes*: proc (context: Context; track: uint32; notes: ptr Note;
++      count: uint32): uint32 {.cdecl, raises: [].}
++    notify*: proc (text: cstring) {.cdecl, raises: [].}
++    replace_notes*: proc (context: Context; track: uint32; notes: ptr Note;
++      count: uint32): uint32 {.cdecl, raises: [].}
++
++  OnContext* = proc (context: ptr Context) {.cdecl, raises: [].}
++  OnRecordableNoteOn* = proc (context: ptr Context; note: ptr LiveNote) {.cdecl, raises: [].}
++  OnSelectedNoteOff* = proc (context: ptr Context; note: ptr NoteOff) {.cdecl, raises: [].}
++  OnRecordingTick* = proc (context: ptr Context; tick: ptr Tick) {.cdecl, raises: [].}
++  OnInputActivity* = proc () {.cdecl, raises: [].}
++  OnQueuedControl* = proc (context: ptr Context; control: ptr Control;
++    actions: ptr Actions) {.cdecl, raises: [].}
++
++  Hooks* {.completeStruct, importcpp: "opxy::extensions::Hooks",
++    header: "opxy/extension.hpp", bycopy.} = object
++    context*: OnContext
++    recordable_note_on*: OnRecordableNoteOn
++    selected_note_off*: OnSelectedNoteOff
++    recording_tick*: OnRecordingTick
++    input_activity*: OnInputActivity
++    queued_control*: OnQueuedControl
++
++const record*: uint32 = 50

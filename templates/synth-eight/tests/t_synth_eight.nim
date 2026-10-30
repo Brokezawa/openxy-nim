@@ -31,6 +31,16 @@ block frame_block:
   doAssert frame.nodes[2].scale == int32(Unit)
   doAssert frame.texts[0].chars[0] == 'b'
   doAssert frame.texts[8].chars[0] == 'd'
+  var radiusSquared: int64
+  for point in frame.paths[0].points:
+    let squared = int64(point.x) * int64(point.x) +
+      int64(point.y) * int64(point.y)
+    if squared > radiusSquared:
+      radiusSquared = squared
+  doAssert radiusSquared > int64(20 * 1024) * int64(20 * 1024)
+  doAssert radiusSquared <= int64(64 * 1024) * int64(64 * 1024)
+  doAssert frame.nodes[0].shade > 0
+  doAssert frame.nodes[1].shade > 0
 
 block page_switch:
   var state: DisplayState

@@ -1,0 +1,8 @@
+{
+  "id": "mynotify",
+  "name": "My Notify",
+  "description": "Shows a small popup when Record is double-tapped.",
+  "note": "A single tap or hold keeps stock recording behavior.",
+  "claims": ["record_double_tap"],
+  "actions": ["notify"]
+}

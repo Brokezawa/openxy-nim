@@ -39,6 +39,7 @@ let headers = [
   "opxy/types.hpp", "opxy/audio.hpp", "opxy/q31.hpp", "opxy/draw.hpp",
   "opxy/sample.hpp", "opxy/sample_engine.hpp", "opxy/sample_analysis.hpp",
   "opxy/effect.hpp", "opxy/transport.hpp", "opxy/page_header.hpp",
+  "opxy/extension.hpp",
 ]
 var command = quoteShell(henka) & " --cpp --std=c++17 --inpath=" &
   quoteShell(sdk / "sdk" / "include") & " --outpath=" & quoteShell(raw)
@@ -52,6 +53,12 @@ if patch.len == 0:
   raise newException(OSError, "`patch` is required to normalize Henka output")
 echo "Applying ", patchFile
 exec quoteShell(patch) & " -p1 -d " & quoteShell(root) & " -i " & quoteShell(patchFile)
+
+# The public extension module and the SDK header share a basename; keep the
+# generated raw module under a distinct name so both can be imported.
+let generatedExtension = raw / "opxy" / "extension.nim"
+if fileExists(generatedExtension):
+  exec "mv " & quoteShell(generatedExtension) & " " & quoteShell(raw / "opxy" / "extension_raw.nim")
 
 let check = findExe("nim")
 if check.len == 0:

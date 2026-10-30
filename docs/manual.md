@@ -97,7 +97,7 @@ Edge and click **Enable audio**.
 The preview is a snapshot. After changing the machine source, run `nim preview`
 again and reload the browser.
 
-## Sample and effect templates
+## Machine and extension templates
 
 - `templates/synth-eight` implements the SDK two-page synth: eight controls,
   page switching, the shared `PageHeader`, and 16 text slots.
@@ -105,6 +105,8 @@ again and reload the browser.
   assignment, drum controls, drum panel, and sample analysis.
 - `templates/effect` implements a send effect with a delay buffer, transport,
   and a dry control.
+- `templates/extension` implements a firmware extension with a Record
+  double-tap claim and a `notify` popup.
 
 Sample engines use `"base": "drumSampler"` when pad settings or drum controls
 are enabled; a `"sampler"` base plays chromatically without the pad services.
@@ -112,12 +114,36 @@ Legacy SDK 1.4 sample engines use stock sample page 7. Effects use the stock FX
 page and an effect number the layout assigns.
 
 The SDK previews synths only. Both synth templates use the browser preview;
-sample and effect machines use host tests and the device compile. The SDK also
-rejects an effect-only collection because the stock startup table requires at
-least one synth or sample engine.
+sample, effect, and extension projects use host tests and the device compile.
+The SDK also rejects an effect-only collection because the stock startup table
+requires at least one synth or sample engine.
 
 The two-page synth uses `PageHeader` and a 16-slot frame. See
 [the API display section](api.md#page-header) for the callback example.
+
+### Extension template
+
+Copy `templates/extension` and edit `extension.json`, `config.nims`, and
+`src/mynotify.nim`. The extension ID is its C++ namespace and Nim module name;
+claims and actions come from the pinned SDK registry.
+
+```sh
+nim test       # Nim host tests with a fake action table
+nim gen        # validate, generate the adapter, package the Nim C++
+nim compile    # requires machine; builds the extension + machine collection
+nim build      # requires stockOs and machine; builds a firmware package
+```
+
+`machine` names a generated synth or sample folder, for example
+`../synth/build/synth/mysynth`. `nim gen` writes
+`build/extension/mynotify/extension.json`, the generated `extension.cpp`, and
+the Nim C++ under `build/extension/nim/mynotify/`. The adapter is generated; do
+not edit it. `sdk.py test --extension` is optional and expects a C++
+`tests/*.cpp`; the Nim tests are the primary suite.
+
+Extension state is module-global because the callbacks carry no userdata.
+Callbacks run serially and must not allocate, block, perform I/O, or raise. The
+extension API is experimental in 0.1.0.
 
 ## Build tasks
 

@@ -73,3 +73,41 @@ proc sdkCommand*(command: SdkCommand; machineDir, outputDir: string;
     result.add " doctor --preview"
     if cxx.len != 0:
       result.add " --cxx " & quoteShell(cxx)
+
+proc sdkExtensionCommand*(command: SdkCommand; extensionDir, machineDir,
+                          outputDir: string; stockOs = ""; python = ""): string =
+  ## Build an extension folder together with a machine collection.
+  requireSdk()
+  if extensionDir.len == 0:
+    raise newException(ValueError, "extension folder is required")
+  if machineDir.len == 0:
+    raise newException(ValueError, "extension builds need a synth or sample machine folder")
+  let executable = if python.len != 0: python else: pythonExecutable()
+  if executable.len == 0:
+    raise newException(IOError,
+      "Python 3 not found in PATH; install Python and run `python3 sdk.py doctor --preview`")
+  when defined(nimscript):
+    let (versionText, versionCode) = gorgeEx(quoteShell(executable) &
+      " -c \"import sys; print(sys.version_info[0] * 1000 + sys.version_info[1])\"")
+    if versionCode != 0 or versionText.strip.len == 0 or versionText.strip.parseInt < 3010:
+      raise newException(IOError,
+        "the OP-XY SDK needs Python 3.10 or newer; found: " & executable &
+        " (" & versionText.strip & ")")
+  if command in {sdkCompile, sdkBuild}:
+    requireToolchain()
+  let script = sdkScript(openxyRoot / "open-xy")
+  result = quoteShell(executable) & " " & quoteShell(script)
+  case command
+  of sdkCompile:
+    result.add " compile --extension " & quoteShell(extensionDir) &
+      " --machine " & quoteShell(machineDir) &
+      " --out " & quoteShell(outputDir)
+  of sdkBuild:
+    if stockOs.len == 0:
+      raise newException(ValueError, "build requires stockOs in the template config.nims")
+    result.add " build --extension " & quoteShell(extensionDir) &
+      " --machine " & quoteShell(machineDir) &
+      " --out " & quoteShell(outputDir) &
+      " --stock-os " & quoteShell(stockOs)
+  else:
+    raise newException(ValueError, "extension builds support compile and build only")

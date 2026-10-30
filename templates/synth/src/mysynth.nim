@@ -21,17 +21,18 @@ const
   PulseCenter = 0x4000_0000'u32
   PhaseMask = 0x7FFF_FFFF'u32
   PhaseTopBit = 0x8000_0000'u32
-  ShadeMask = 7
 
-  CenterX = 320
-  CenterY = 160
-  OrbitX = 72
+  NodeX = 240
+  NodeOffset = 32
+  NodeY = 120
   SpokeRadius = 40
   InnerRadius = 24
   PointsPerTurn = 64
   TurnTenths = 3600
   PathPhaseOffset = 900
   PathKeyStride = 64
+  DisplayElapsedMax = 102
+  DisplayPhaseMask = 8191'u32
 
 
 proc initialize*(voice: var Voice; shared: var Shared; owner: VoiceId) {.raises: [].} =
@@ -67,30 +68,33 @@ proc display*(state: var DisplayState; input: Input; frame: var Frame) {.raises:
   let events = state.notes.update(input)
   if events.holdStarted or events.noteReleased:
     state.phase = 0
-  inc state.phase
-  let motionAmount = int32(toInt32(input.parameters[motion]) shr 20)
-  let spin = int32(state.phase mod 360) * 10 + motionAmount
-  let left = q10(CenterX - OrbitX)
-  let right = q10(CenterX + OrbitX)
-  let middle = q10(CenterY)
+  if input.heldNotes > 0 and input.heldNotes <= MaxHeldNotes and
+      input.reducedMotion == 0:
+    state.phase = (state.phase +
+      uint32(clampQ10(toInt32(input.elapsed), 0, DisplayElapsedMax))) and
+      DisplayPhaseMask
+  let motionAmount: int32 =
+    if input.reducedMotion != 0: 0
+    else: (int32(state.phase shr 7) - 32) *
+      (toInt32(input.parameters[motion]) shr 26) div 32
 
-  place(frame, 0, left, middle, UnitQ10, uint32(motionAmount and ShadeMask), PaintStroke)
-  place(frame, 1, right, middle, UnitQ10,
-    uint32((motionAmount + 3) and ShadeMask), PaintFillAndStroke)
-  turn(frame, 0, rotation(spin))
-  turn(frame, 1, rotation(-spin))
+  place(frame, 0, q10(NodeX - NodeOffset + motionAmount), q10(NodeY),
+    UnitQ10, 15, PaintStroke)
+  place(frame, 1, q10(NodeX + NodeOffset - motionAmount), q10(NodeY),
+    UnitQ10, 10, PaintStroke)
   header(frame, 0, "NIM")
 
   for path in 0 .. 1:
-    frame.paths[path].key = state.phase div 8'u32 + 1'u32 + uint32(path * PathKeyStride)
+    frame.paths[path].key = state.phase div 8'u32 + 1'u32 +
+      uint32(path * PathKeyStride)
     let radius: int32 = if path == 0: SpokeRadius else: InnerRadius
     for point in 0 ..< PointsPerTurn:
-      let angle = int32(point) * TurnTenths div PointsPerTurn + spin +
+      let angle = int32(point) * TurnTenths div PointsPerTurn +
         int32(path * PathPhaseOffset)
       let direction = rotation(angle)
       frame.paths[path].points[point] = Point(
-        x: direction.cos * radius div toInt32(UnitQ10),
-        y: direction.sin * radius div toInt32(UnitQ10),
+        x: direction.cos * radius,
+        y: direction.sin * radius,
       )
 
 openxyValidate(mkSynth, Voice, Shared)

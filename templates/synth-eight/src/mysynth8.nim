@@ -129,8 +129,8 @@ proc display*(state: var DisplayState; input: Input; frame: var Frame) {.raises:
         int32(path * PathPhaseOffset)
       let direction = rotation(angle)
       frame.paths[path].points[point] = Point(
-        x: direction.cos * radius div toInt32(UnitQ10),
-        y: direction.sin * radius div toInt32(UnitQ10),
+        x: direction.cos * radius,
+        y: direction.sin * radius,
       )
 
   place(frame, 0, q10(NodeX - NodeOffset + motionAmount), q10(NodeY), Unit, 15, PaintStroke)
