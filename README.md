@@ -19,7 +19,7 @@ follow after the native path is stable.
 - A Clang/LLVM build with the WebAssembly target for previews
 - The pinned Blackfin toolchain for `compile`/`build`
 
-Tested environment for 0.1.0: Nim 2.2.12, Python 3.12.13, Node 26.12.1, LLVM
+Tested environment for 0.1.0: Nim 2.2.12, Python 3.12.10, Node 26.12.1, LLVM
 23.1.4, Atlas 0.16.3, and SDK commit
 `17840e39a0e427be827cd1c8cbc62d8015205bcd` (SDK API 1.6). CI uses these exact versions for
 Nim, Python, Node, and NumPy, and records the resolved Homebrew LLVM and Atlas

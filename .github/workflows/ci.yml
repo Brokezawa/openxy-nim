@@ -82,7 +82,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12.13"
+          python-version: "3.12.10"
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -173,7 +173,9 @@ jobs:
 
       - name: Initialize Atlas projects
         working-directory: ${{ github.workspace }}
-        run: atlas init
+        run: |
+          atlas init
+          atlas install
 
       - name: Link local openxy
         working-directory: ${{ runner.temp }}/atlas-smoke
