@@ -170,6 +170,11 @@ jobs:
           rm -rf "$RUNNER_TEMP/atlas-smoke"
           mkdir -p "$RUNNER_TEMP/atlas-smoke"
           cp -R templates/synth/. "$RUNNER_TEMP/atlas-smoke/"
+          # Atlas links by package name, not repository name. The local checkout
+          # is package `openxy`; the published template dependency is
+          # `gh:Brokezawa/openxy-nim`. Use the local package name for this smoke.
+          perl -pi -e 's#requires "gh:Brokezawa/openxy-nim"#requires "openxy"#' \
+            "$RUNNER_TEMP/atlas-smoke/openxy_synth.nimble"
 
       - name: Initialize Atlas projects
         working-directory: ${{ github.workspace }}
