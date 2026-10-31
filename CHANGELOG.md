@@ -2,7 +2,7 @@
 
 All notable changes to openxy are recorded here.
 
-## 0.1.0 — Unreleased
+## 0.1.0 — 2026-10-31
 
 ### Added
 
@@ -48,8 +48,8 @@ All notable changes to openxy are recorded here.
 
 - Source-only experimental developer preview.
 - Firmware images and stock OS files are not included.
-- Device builds are not hardware-qualified until the release hardware test is
-  recorded.
+- Hardware-tested on OP-XY OS 1.2.1 on 2026-10-31 with the four machines and
+  `mynotify`; still experimental, with no recovery guarantee.
 - Browser preview is synth-only.
 - The extension API is experimental, source-level, and covered by one
   `mynotify` hardware row, not a stability guarantee.
