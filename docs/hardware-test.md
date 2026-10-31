@@ -19,7 +19,7 @@ Fill this table from the combined candidate package and the SDK build report.
 
 | Field | Value |
 | --- | --- |
-| Candidate commit | `7d66066746be` plus the display-fix working tree; final Git commit pending |
+| Candidate commit | `1db55e4` (SDK 1.6 source); final Git commit is the `v0.1.0` tag target |
 | Candidate package path | `templates/sample/build/out/0.1.0-candidate-displayfix2` |
 | Package hash (`candidate/os.ldr`) | `92b541aeff49c8e35468b61b2e84a71415d500ba749786ab963ead9d297b1891` |
 | Stock OS version | 1.2.1 |
